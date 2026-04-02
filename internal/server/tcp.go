@@ -5,6 +5,17 @@ import (
 	"net"
 )
 
+const defaultPort = ":6379"
+
+type Config struct {
+	Port string
+}
+
+type Server struct {
+	Config
+	ln net.Listener
+}
+
 func (s *Server) Start() bool {
 	ln, err := net.Listen("tcp", s.Port)
 	if err != nil {

@@ -4,22 +4,23 @@ import (
 	"fmt"
 	"io"
 	"strconv"
-	"strings"
 )
 
 func (r *Resp) ParseRESP() (Value, error) {
+	fmt.Println("parsing request to value...")
 	output := Value{}
 	firstByte, err := r.reader.ReadByte()
 	if err != nil {
 		return output, err
 	}
+	// fmt.Printf("first byte: %d (%q)\n", firstByte, firstByte)
 
 	switch firstByte {
 	case STRING:
 		return r.readString()
 	case ERROR:
 		return r.readError()
-	case INTERGER:
+	case INTEGER:
 		return r.readInterger()
 	case BULK:
 		return r.readBulk()
@@ -33,30 +34,34 @@ func (r *Resp) ParseRESP() (Value, error) {
 func (r *Resp) ReadLine() ([]byte, int, error) {
 	var size int
 	line := make([]byte, 0)
+
 	for {
 		b, err := r.reader.ReadByte()
 		if err != nil {
 			return nil, 0, err
 		}
 
-		size += 1
+		size++
 		line = append(line, b)
-		if len(line) >= 2 && line[len(line)-2] == '\r' && line[len(line)-1] == '\n' {
+
+		if len(line) >= 2 &&
+			line[len(line)-2] == '\r' &&
+			line[len(line)-1] == '\n' {
+
+			line = line[:len(line)-2]
 			break
 		}
 	}
 	return line, size, nil
 }
 
-func (r *Resp) readInteger() (x int, n int, err error) {
-	line, n, err := r.ReadLine()
-
+func (r *Resp) readNum() (x int, n int, err error) {
+	num, n, err := r.ReadLine()
 	if err != nil {
-
 		return 0, 0, err
 	}
-	temp := strings.TrimSuffix(string(line), "\r\n")
-	i64, err := strconv.ParseInt(temp, 10, 64)
+
+	i64, err := strconv.ParseInt(string(num), 10, 64)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -65,11 +70,11 @@ func (r *Resp) readInteger() (x int, n int, err error) {
 
 func (r *Resp) readInterger() (Value, error) {
 	v := Value{Typ: "interger"}
-	num, _, err := r.readInteger()
+	num, _, err := r.readNum()
 	if err != nil {
 		return v, err
 	}
-	v.Num = num
+	v.In = num
 	return v, nil
 }
 
@@ -79,7 +84,7 @@ func (r *Resp) readString() (Value, error) {
 	if err != nil {
 		return v, err
 	}
-	v.Str = strings.TrimSuffix(string(line), "\r\n")
+	v.Str = string(line)
 	return v, nil
 }
 
@@ -89,14 +94,14 @@ func (r *Resp) readError() (Value, error) {
 	if err != nil {
 		return v, err
 	}
-	v.Er = strings.TrimSuffix(string(line), "\r\n")
+	v.Er = string(line)
 	return v, nil
 }
 
 func (r *Resp) readBulk() (Value, error) {
 	v := Value{}
 	v.Typ = "bulk"
-	length, _, err := r.readInteger()
+	length, _, err := r.readNum()
 	if err != nil {
 		return v, err
 	}
@@ -125,7 +130,7 @@ func (r *Resp) readArray() (Value, error) {
 	v := Value{}
 	v.Typ = "array"
 
-	length, _, err := r.readInteger()
+	length, _, err := r.readNum()
 	if err != nil {
 		return v, err
 	}

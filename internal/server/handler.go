@@ -8,17 +8,6 @@ import (
 	"rodis/internal/protocol/resp"
 )
 
-const defaultPort = ":6379"
-
-type Config struct {
-	Port string
-}
-
-type Server struct {
-	Config
-	ln net.Listener
-}
-
 func NewServer(cfg Config) *Server {
 	if len(cfg.Port) == 0 {
 		cfg.Port = defaultPort
@@ -34,6 +23,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 	rp := resp.NewResp(conn)
 
 	for {
+		fmt.Println("start loop")
 		request, err := rp.ParseRESP()
 		if err != nil {
 			if err != io.EOF {

@@ -7,18 +7,18 @@ import (
 )
 
 const (
-	STRING   = '+'
-	ERROR    = '-'
-	INTERGER = ':'
-	BULK     = '$'
-	ARRAY    = '*'
+	STRING  = '+'
+	ERROR   = '-'
+	INTEGER = ':'
+	BULK    = '$'
+	ARRAY   = '*'
 )
 
 type Value struct {
 	Typ   string
 	Str   string
 	Er    string
-	Num   int
+	In    int
 	Bulk  string
 	Array []Value
 }
@@ -58,7 +58,7 @@ func NewString(msg string) Value {
 func NewNum(msg int) Value {
 	return Value{
 		Typ: "num",
-		Num: msg,
+		In:  msg,
 	}
 }
 

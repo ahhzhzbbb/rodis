@@ -8,8 +8,9 @@ func Commands(value resp.Value) resp.Value {
 	switch command.Bulk {
 	case "PING":
 		return ping(values)
+	default:
+		return resp.NewBulk("OK")
 	}
-	return resp.Value{}
 }
 
 func ping(args []resp.Value) resp.Value {
