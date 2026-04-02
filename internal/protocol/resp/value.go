@@ -15,12 +15,12 @@ const (
 )
 
 type Value struct {
-	typ   string
-	str   string
-	er    string
-	num   int
-	bulk  string
-	array []Value
+	Typ   string
+	Str   string
+	Er    string
+	Num   int
+	Bulk  string
+	Array []Value
 }
 
 type Resp struct {
@@ -40,3 +40,35 @@ func (r *Resp) Writer(bytes []byte) error {
 	}
 	return r.writer.Flush()
 }
+
+func NewError(msg string) Value {
+	return Value{
+		Typ: "error",
+		Str: msg,
+	}
+}
+
+func NewString(msg string) Value {
+	return Value{
+		Typ: "string",
+		Str: msg,
+	}
+}
+
+func NewNum(msg int) Value {
+	return Value{
+		Typ: "num",
+		Num: msg,
+	}
+}
+
+func NewBulk(msg string) Value {
+	return Value{
+		Typ:  "bulk",
+		Bulk: msg,
+	}
+}
+
+// func NewArray(values []Value) {
+// 	return []
+// }

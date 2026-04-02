@@ -64,38 +64,38 @@ func (r *Resp) readInteger() (x int, n int, err error) {
 }
 
 func (r *Resp) readInterger() (Value, error) {
-	v := Value{typ: "interger"}
+	v := Value{Typ: "interger"}
 	num, _, err := r.readInteger()
 	if err != nil {
 		return v, err
 	}
-	v.num = num
+	v.Num = num
 	return v, nil
 }
 
 func (r *Resp) readString() (Value, error) {
-	v := Value{typ: "string"}
+	v := Value{Typ: "string"}
 	line, _, err := r.ReadLine()
 	if err != nil {
 		return v, err
 	}
-	v.str = strings.TrimSuffix(string(line), "\r\n")
+	v.Str = strings.TrimSuffix(string(line), "\r\n")
 	return v, nil
 }
 
 func (r *Resp) readError() (Value, error) {
-	v := Value{typ: "error"}
+	v := Value{Typ: "error"}
 	line, _, err := r.ReadLine()
 	if err != nil {
 		return v, err
 	}
-	v.er = strings.TrimSuffix(string(line), "\r\n")
+	v.Er = strings.TrimSuffix(string(line), "\r\n")
 	return v, nil
 }
 
 func (r *Resp) readBulk() (Value, error) {
 	v := Value{}
-	v.typ = "bulk"
+	v.Typ = "bulk"
 	length, _, err := r.readInteger()
 	if err != nil {
 		return v, err
@@ -116,14 +116,14 @@ func (r *Resp) readBulk() (Value, error) {
 		return v, err
 	}
 
-	v.bulk = string(bulk)
+	v.Bulk = string(bulk)
 
 	return v, nil
 }
 
 func (r *Resp) readArray() (Value, error) {
 	v := Value{}
-	v.typ = "array"
+	v.Typ = "array"
 
 	length, _, err := r.readInteger()
 	if err != nil {
@@ -136,9 +136,9 @@ func (r *Resp) readArray() (Value, error) {
 		return v, fmt.Errorf("resp: invalid array length %d", length)
 	}
 
-	v.array = make([]Value, length)
-	for i := range v.array {
-		v.array[i], err = r.ParseRESP()
+	v.Array = make([]Value, length)
+	for i := range v.Array {
+		v.Array[i], err = r.ParseRESP()
 		if err != nil {
 			return v, err
 		}

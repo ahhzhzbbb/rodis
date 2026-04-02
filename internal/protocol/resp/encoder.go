@@ -3,7 +3,7 @@ package resp
 import "strconv"
 
 func (v Value) Marshal() []byte {
-	switch v.typ {
+	switch v.Typ {
 	case "array":
 		return v.marshalArray()
 	case "bulk":
@@ -22,10 +22,10 @@ func (v Value) Marshal() []byte {
 func (v Value) marshalArray() []byte {
 	var bytes []byte
 	bytes = append(bytes, ARRAY)
-	bytes = append(bytes, strconv.Itoa(len(v.array))...)
+	bytes = append(bytes, strconv.Itoa(len(v.Array))...)
 	bytes = append(bytes, '\r', '\n')
 
-	for _, element := range v.array {
+	for _, element := range v.Array {
 		bytes = append(bytes, element.Marshal()...)
 	}
 
@@ -34,10 +34,10 @@ func (v Value) marshalArray() []byte {
 func (v Value) marshalBulk() []byte {
 	var bytes []byte
 	bytes = append(bytes, BULK)
-	bytes = append(bytes, strconv.Itoa(len(v.bulk))...)
+	bytes = append(bytes, strconv.Itoa(len(v.Bulk))...)
 	bytes = append(bytes, '\r', '\n')
 
-	bytes = append(bytes, v.bulk...)
+	bytes = append(bytes, v.Bulk...)
 	bytes = append(bytes, '\r', '\n')
 
 	return bytes
@@ -45,7 +45,7 @@ func (v Value) marshalBulk() []byte {
 func (v Value) marshalString() []byte {
 	var bytes []byte
 	bytes = append(bytes, STRING)
-	bytes = append(bytes, v.str...)
+	bytes = append(bytes, v.Str...)
 	bytes = append(bytes, '\r', '\n')
 
 	return bytes
@@ -56,7 +56,7 @@ func (v Value) marshallNull() []byte {
 func (v Value) marshallError() []byte {
 	var bytes []byte
 	bytes = append(bytes, ERROR)
-	bytes = append(bytes, v.er...)
+	bytes = append(bytes, v.Er...)
 	bytes = append(bytes, '\r', '\n')
 
 	return bytes

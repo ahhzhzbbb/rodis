@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"rodis/internal/command"
 	"rodis/internal/protocol/resp"
 )
 
@@ -44,7 +45,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 			return
 		}
 		fmt.Printf("request: %v\n", request)
-		response := resp.Commands(request)
+		response := command.Commands(request)
 		encoder := response.Marshal()
 		rp.Writer(encoder)
 	}
