@@ -8,15 +8,6 @@ import (
 	"rodis/internal/protocol/resp"
 )
 
-func NewServer(cfg Config) *Server {
-	if len(cfg.Port) == 0 {
-		cfg.Port = defaultPort
-	}
-	return &Server{
-		Config: cfg,
-	}
-}
-
 func (s *Server) handleConnection(conn net.Conn) {
 	defer conn.Close()
 
