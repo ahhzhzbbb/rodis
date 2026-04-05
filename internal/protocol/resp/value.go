@@ -44,7 +44,7 @@ func (r *Resp) Writer(bytes []byte) error {
 func NewError(msg string) Value {
 	return Value{
 		Typ: "error",
-		Str: msg,
+		Er:  msg,
 	}
 }
 
@@ -55,9 +55,9 @@ func NewString(msg string) Value {
 	}
 }
 
-func NewNum(msg int) Value {
+func NewInteger(msg int) Value {
 	return Value{
-		Typ: "num",
+		Typ: "integer",
 		In:  msg,
 	}
 }

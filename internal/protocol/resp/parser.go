@@ -11,20 +11,26 @@ func (r *Resp) ParseRESP() (Value, error) {
 	output := Value{}
 	firstByte, err := r.reader.ReadByte()
 	if err != nil {
+		fmt.Println("NOPE")
 		return output, err
 	}
 	// fmt.Printf("first byte: %d (%q)\n", firstByte, firstByte)
 
 	switch firstByte {
 	case STRING:
+		fmt.Printf("%c\n", STRING)
 		return r.readString()
 	case ERROR:
+		fmt.Printf("%c\n", ERROR)
 		return r.readError()
 	case INTEGER:
+		fmt.Printf("%c\n", INTEGER)
 		return r.readInterger()
 	case BULK:
+		fmt.Printf("%c\n", BULK)
 		return r.readBulk()
 	case ARRAY:
+		fmt.Printf("%c\n", ARRAY)
 		return r.readArray()
 	default:
 		return output, fmt.Errorf("resp: unsupported value type %q", firstByte)
@@ -69,7 +75,7 @@ func (r *Resp) readNum() (x int, n int, err error) {
 }
 
 func (r *Resp) readInterger() (Value, error) {
-	v := Value{Typ: "interger"}
+	v := Value{Typ: "integer"}
 	num, _, err := r.readNum()
 	if err != nil {
 		return v, err

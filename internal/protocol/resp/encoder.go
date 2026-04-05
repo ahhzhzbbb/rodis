@@ -13,7 +13,9 @@ func (v Value) Marshal() []byte {
 	case "null":
 		return v.marshallNull()
 	case "error":
-		return v.marshallError()
+		return v.marshalError()
+	case "integer":
+		return v.marshalInteger()
 	default:
 		return []byte{}
 	}
@@ -53,10 +55,19 @@ func (v Value) marshalString() []byte {
 func (v Value) marshallNull() []byte {
 	return []byte("$-1\r\n")
 }
-func (v Value) marshallError() []byte {
+func (v Value) marshalError() []byte {
 	var bytes []byte
 	bytes = append(bytes, ERROR)
 	bytes = append(bytes, v.Er...)
+	bytes = append(bytes, '\r', '\n')
+
+	return bytes
+}
+func (v Value) marshalInteger() []byte {
+	var bytes []byte
+
+	bytes = append(bytes, INTEGER)
+	bytes = append(bytes, byte(v.In))
 	bytes = append(bytes, '\r', '\n')
 
 	return bytes
