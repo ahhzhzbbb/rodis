@@ -3,11 +3,13 @@ package server
 import (
 	"fmt"
 	"net"
+	"rodis/internal/engine"
 )
 
 type Server struct {
 	Config
 	ln net.Listener
+	kv *engine.KeyValue
 }
 
 func NewServer(cfg Config) *Server {
@@ -16,6 +18,7 @@ func NewServer(cfg Config) *Server {
 	}
 	return &Server{
 		Config: cfg,
+		kv:     engine.NewKeyValue(),
 	}
 }
 

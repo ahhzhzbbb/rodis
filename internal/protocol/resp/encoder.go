@@ -64,11 +64,6 @@ func (v Value) marshalError() []byte {
 	return bytes
 }
 func (v Value) marshalInteger() []byte {
-	var bytes []byte
-
-	bytes = append(bytes, INTEGER)
-	bytes = append(bytes, byte(v.In))
-	bytes = append(bytes, '\r', '\n')
-
+	bytes := []byte(string(INTEGER) + strconv.Itoa(v.In) + "\r\n")
 	return bytes
 }

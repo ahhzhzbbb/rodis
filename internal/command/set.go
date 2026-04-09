@@ -1,0 +1,24 @@
+package command
+
+import "rodis/internal/protocol/resp"
+
+type SetCommand struct{}
+
+func (c *SetCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value {
+	if len(args) != 2 {
+		return resp.NewError("ERR wrong number of arguments for 'set' command")
+	}
+	if ctx == nil || ctx.kv == nil {
+		return resp.NewError("ERR internal server error")
+	}
+
+	key := args[0].Bulk
+
+	value := args[1].Bulk
+
+	ctx.kv.Mu.Lock()
+	ctx.kv.Kv[key] = value
+	ctx.kv.Mu.Unlock()
+
+	return resp.NewBulk("OK")
+}

@@ -11,7 +11,6 @@ func (r *Resp) ParseRESP() (Value, error) {
 	output := Value{}
 	firstByte, err := r.reader.ReadByte()
 	if err != nil {
-		fmt.Println("NOPE")
 		return output, err
 	}
 	// fmt.Printf("first byte: %d (%q)\n", firstByte, firstByte)

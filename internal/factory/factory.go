@@ -9,4 +9,7 @@ type Factory interface {
 var CommandRegistry = map[string]func() command.Command{
 	"PING":    func() command.Command { return &command.PingCommand{} },
 	"COMMAND": func() command.Command { return &command.CommandDocs{} },
+	"GET":     func() command.Command { return &command.GetCommand{} },
+	"SET":     func() command.Command { return &command.SetCommand{} },
+	"DEL":     func() command.Command { return &command.DelCommand{} },
 }

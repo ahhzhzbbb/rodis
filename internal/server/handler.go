@@ -23,6 +23,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 			} else {
 				fmt.Printf("client %s disconnected\n", conn.RemoteAddr())
 			}
+			fmt.Println("Error: ", err)
 			s.removeConnection(conn)
 			return
 		}
@@ -37,14 +38,17 @@ func (s *Server) handleConnection(conn net.Conn) {
 			response = resp.NewError("FAILED")
 		} else {
 			comm := creator()
-			response = comm.Execute(decoder.Array[1:], &command.CommandContext{})
+			response = comm.Execute(decoder.Array[1:], command.NewCommandContext(s.kv))
 		}
+
+		fmt.Printf("response: %v\n", response)
 
 		encoder := response.Marshal()
 		err = rp.Writer(encoder)
 		if err != nil {
 			//do something
 		}
+		fmt.Println("Done!!!")
 	}
 }
 
