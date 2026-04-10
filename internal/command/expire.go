@@ -1,7 +1,6 @@
 package command
 
 import (
-	"fmt"
 	"rodis/internal/protocol/resp"
 	"strconv"
 	"time"
@@ -17,9 +16,8 @@ func (c *ExpireCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Val
 	var result int
 	key := args[0].Bulk
 	i64, _ := strconv.ParseInt((args[1].Bulk), 10, 64)
-	fmt.Println(time.Now())
 	t := time.Now().Add(time.Duration(i64) * time.Second)
-	fmt.Println(t)
+
 	_, ok := ctx.kv.Kv[key]
 	if ok {
 		ctx.et.Mu.Lock()

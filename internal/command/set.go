@@ -16,6 +16,13 @@ func (c *SetCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value 
 
 	value := args[1].Bulk
 
+	_, ok := ctx.et.Et[key]
+	if ok {
+		ctx.et.Mu.Lock()
+		delete(ctx.et.Et, key)
+		ctx.et.Mu.Unlock()
+	}
+
 	ctx.kv.Mu.Lock()
 	ctx.kv.Kv[key] = value
 	ctx.kv.Mu.Unlock()

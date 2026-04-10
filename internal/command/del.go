@@ -11,10 +11,19 @@ func (c *DelCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value 
 	}
 
 	for _, arg := range args {
-		_, ok := ctx.kv.Kv[arg.Bulk]
+		key := arg.Bulk
+
+		_, ok := ctx.et.Et[key]
+		if ok {
+			ctx.et.Mu.Lock()
+			delete(ctx.et.Et, key)
+			ctx.et.Mu.Unlock()
+		}
+
+		_, ok = ctx.kv.Kv[key]
 		if ok {
 			ctx.kv.Mu.Lock()
-			delete(ctx.kv.Kv, arg.Bulk)
+			delete(ctx.kv.Kv, key)
 			ctx.kv.Mu.Unlock()
 			count++
 		}
