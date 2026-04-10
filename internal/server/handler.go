@@ -16,7 +16,6 @@ func (s *Server) handleConnection(conn net.Conn) {
 	rp := resp.NewResp(conn)
 
 	for {
-		fmt.Println("parsing request to value...")
 		var response resp.Value
 		decoder, err := rp.ParseRESP()
 		if err != nil {
@@ -52,7 +51,6 @@ func (s *Server) handleConnection(conn net.Conn) {
 		if err != nil {
 			//do something
 		}
-		fmt.Println("Done!!!")
 	}
 }
 

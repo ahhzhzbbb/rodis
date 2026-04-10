@@ -10,7 +10,7 @@ type ExpireCommand struct{}
 
 func (c *ExpireCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value {
 	if len(args) != 2 {
-		return resp.NewBulk("(error) ERR wrong number of arguments for 'expire' command")
+		return resp.NewError("(error) ERR wrong number of arguments for 'expire' command")
 	}
 
 	var result int

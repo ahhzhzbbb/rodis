@@ -6,7 +6,7 @@ type ExistsCommand struct{}
 
 func (c *ExistsCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value {
 	if len(args) == 0 {
-		return resp.NewBulk("(error) ERR wrong number of arguments for 'exists' command")
+		return resp.NewError("ERR wrong number of arguments for 'exists' command")
 	}
 
 	var result int
