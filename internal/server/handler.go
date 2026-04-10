@@ -38,7 +38,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 
 		creator, ok := factory.CommandRegistry[typeOfCommand]
 		if !ok {
-			response = resp.NewError("FAILED")
+			response = resp.NewError(fmt.Sprintf("ERR unknown command '%s', with args beginning with: ", typeOfCommand))
 		} else {
 			comm := creator()
 			response = comm.Execute(decoder.Array[1:], command.NewCommandContext(s.kv, s.et))

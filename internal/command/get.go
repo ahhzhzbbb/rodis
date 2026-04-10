@@ -28,14 +28,14 @@ func (c *GetCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value 
 		ctx.et.Mu.Lock()
 		delete(ctx.et.Et, key)
 		ctx.et.Mu.Unlock()
-		return resp.NewBulk("")
+		return resp.NewNullBulk()
 	}
 
 	ctx.kv.Mu.RLock()
 	value, exists := ctx.kv.Kv[key]
 	ctx.kv.Mu.RUnlock()
 	if !exists {
-		return resp.Value{Typ: "null"}
+		return resp.NewNullBulk()
 	}
 
 	return resp.NewBulk(value)

@@ -69,6 +69,12 @@ func NewBulk(msg string) Value {
 	}
 }
 
+func NewNullBulk() Value {
+	return Value{
+		Typ: "null",
+	}
+}
+
 // func NewArray(values []Value) {
 // 	return []
 // }

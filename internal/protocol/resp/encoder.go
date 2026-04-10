@@ -11,7 +11,7 @@ func (v Value) Marshal() []byte {
 	case "string":
 		return v.marshalString()
 	case "null":
-		return v.marshallNull()
+		return v.marshallNullBulk()
 	case "error":
 		return v.marshalError()
 	case "integer":
@@ -36,16 +36,11 @@ func (v Value) marshalArray() []byte {
 func (v Value) marshalBulk() []byte {
 	var bytes []byte
 	bytes = append(bytes, BULK)
-	if len(v.Bulk) <= 0 {
-		bytes = append(bytes, strconv.Itoa(-1)...)
-		bytes = append(bytes, '\r', '\n')
-	} else {
-		bytes = append(bytes, strconv.Itoa(len(v.Bulk))...)
-		bytes = append(bytes, '\r', '\n')
+	bytes = append(bytes, strconv.Itoa(len(v.Bulk))...)
+	bytes = append(bytes, '\r', '\n')
 
-		bytes = append(bytes, v.Bulk...)
-		bytes = append(bytes, '\r', '\n')
-	}
+	bytes = append(bytes, v.Bulk...)
+	bytes = append(bytes, '\r', '\n')
 
 	return bytes
 }
@@ -57,7 +52,7 @@ func (v Value) marshalString() []byte {
 
 	return bytes
 }
-func (v Value) marshallNull() []byte {
+func (v Value) marshallNullBulk() []byte {
 	return []byte("$-1\r\n")
 }
 func (v Value) marshalError() []byte {
