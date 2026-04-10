@@ -9,13 +9,16 @@ import (
 type ExpireCommand struct{}
 
 func (c *ExpireCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value {
-	if len(args) == 0 || len(args) == 1 {
+	if len(args) != 2 {
 		return resp.NewBulk("(error) ERR wrong number of arguments for 'expire' command")
 	}
 
 	var result int
 	key := args[0].Bulk
-	i64, _ := strconv.ParseInt((args[1].Bulk), 10, 64)
+	i64, err := strconv.ParseInt((args[1].Bulk), 10, 64)
+	if err != nil {
+		return resp.NewError("ERR value is not an integer or out of range")
+	}
 	t := time.Now().Add(time.Duration(i64) * time.Second)
 
 	_, ok := ctx.kv.Kv[key]
