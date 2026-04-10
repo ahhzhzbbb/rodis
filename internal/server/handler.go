@@ -7,6 +7,7 @@ import (
 	"rodis/internal/command"
 	"rodis/internal/factory"
 	"rodis/internal/protocol/resp"
+	"strings"
 )
 
 func (s *Server) handleConnection(conn net.Conn) {
@@ -15,6 +16,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 	rp := resp.NewResp(conn)
 
 	for {
+		fmt.Println("parsing request to value...")
 		var response resp.Value
 		decoder, err := rp.ParseRESP()
 		if err != nil {
@@ -32,6 +34,8 @@ func (s *Server) handleConnection(conn net.Conn) {
 			continue
 		}
 		typeOfCommand := decoder.Array[0].Bulk
+
+		typeOfCommand = strings.ToUpper(typeOfCommand)
 
 		creator, ok := factory.CommandRegistry[typeOfCommand]
 		if !ok {

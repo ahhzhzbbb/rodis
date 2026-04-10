@@ -7,7 +7,6 @@ import (
 )
 
 func (r *Resp) ParseRESP() (Value, error) {
-	fmt.Println("parsing request to value...")
 	output := Value{}
 	firstByte, err := r.reader.ReadByte()
 	if err != nil {
@@ -17,19 +16,19 @@ func (r *Resp) ParseRESP() (Value, error) {
 
 	switch firstByte {
 	case STRING:
-		fmt.Printf("%c\n", STRING)
+		// fmt.Printf("%c\n", STRING)
 		return r.readString()
 	case ERROR:
-		fmt.Printf("%c\n", ERROR)
+		// fmt.Printf("%c\n", ERROR)
 		return r.readError()
 	case INTEGER:
-		fmt.Printf("%c\n", INTEGER)
+		// fmt.Printf("%c\n", INTEGER)
 		return r.readInterger()
 	case BULK:
-		fmt.Printf("%c\n", BULK)
+		// fmt.Printf("%c\n", BULK)
 		return r.readBulk()
 	case ARRAY:
-		fmt.Printf("%c\n", ARRAY)
+		// fmt.Printf("%c\n", ARRAY)
 		return r.readArray()
 	default:
 		return output, fmt.Errorf("resp: unsupported value type %q", firstByte)
