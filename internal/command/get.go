@@ -1,6 +1,10 @@
 package command
 
-import "rodis/internal/protocol/resp"
+import (
+	"fmt"
+	"rodis/internal/protocol/resp"
+	"time"
+)
 
 type GetCommand struct{}
 
@@ -13,6 +17,22 @@ func (c *GetCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value 
 	}
 
 	key := args[0].Bulk
+
+	t, ok := ctx.et.Et[key]
+
+	if ok && t.Before(time.Now()) {
+
+		fmt.Println(time.Now())
+		fmt.Println(t)
+		fmt.Println("expired key")
+		ctx.kv.Mu.Lock()
+		delete(ctx.kv.Kv, key)
+		ctx.kv.Mu.Unlock()
+		ctx.et.Mu.Lock()
+		delete(ctx.et.Et, key)
+		ctx.et.Mu.Unlock()
+		return resp.NewBulk("")
+	}
 
 	ctx.kv.Mu.RLock()
 	value, exists := ctx.kv.Kv[key]

@@ -7,10 +7,14 @@ import (
 
 type CommandContext struct {
 	kv *engine.KeyValue
+	et *engine.ExpireTime
 }
 
-func NewCommandContext(kv *engine.KeyValue) *CommandContext {
-	return &CommandContext{kv: kv}
+func NewCommandContext(kv *engine.KeyValue, et *engine.ExpireTime) *CommandContext {
+	return &CommandContext{
+		kv: kv,
+		et: et,
+	}
 }
 
 type Command interface {

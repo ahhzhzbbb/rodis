@@ -42,7 +42,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 			response = resp.NewError("FAILED")
 		} else {
 			comm := creator()
-			response = comm.Execute(decoder.Array[1:], command.NewCommandContext(s.kv))
+			response = comm.Execute(decoder.Array[1:], command.NewCommandContext(s.kv, s.et))
 		}
 
 		fmt.Printf("response: %v\n", response)

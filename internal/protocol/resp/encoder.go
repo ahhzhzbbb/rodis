@@ -36,11 +36,16 @@ func (v Value) marshalArray() []byte {
 func (v Value) marshalBulk() []byte {
 	var bytes []byte
 	bytes = append(bytes, BULK)
-	bytes = append(bytes, strconv.Itoa(len(v.Bulk))...)
-	bytes = append(bytes, '\r', '\n')
+	if len(v.Bulk) <= 0 {
+		bytes = append(bytes, strconv.Itoa(-1)...)
+		bytes = append(bytes, '\r', '\n')
+	} else {
+		bytes = append(bytes, strconv.Itoa(len(v.Bulk))...)
+		bytes = append(bytes, '\r', '\n')
 
-	bytes = append(bytes, v.Bulk...)
-	bytes = append(bytes, '\r', '\n')
+		bytes = append(bytes, v.Bulk...)
+		bytes = append(bytes, '\r', '\n')
+	}
 
 	return bytes
 }
