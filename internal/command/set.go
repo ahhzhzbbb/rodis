@@ -27,5 +27,5 @@ func (c *SetCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value 
 	ctx.kv.Kv[key] = value
 	ctx.kv.Mu.Unlock()
 
-	return resp.NewBulk("OK")
+	return resp.NewString("OK")
 }

@@ -12,5 +12,5 @@ func (c *PingCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value
 		return args[0]
 	}
 
-	return resp.NewBulk("PONG")
+	return resp.NewString("PONG")
 }
