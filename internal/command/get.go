@@ -1,7 +1,6 @@
 package command
 
 import (
-	"fmt"
 	"rodis/internal/protocol/resp"
 	"time"
 )
@@ -18,13 +17,11 @@ func (c *GetCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value 
 
 	key := args[0].Bulk
 
+	ctx.et.Mu.RLock()
 	t, ok := ctx.et.Et[key]
+	ctx.et.Mu.RUnlock()
 
 	if ok && t.Before(time.Now()) {
-
-		fmt.Println(time.Now())
-		fmt.Println(t)
-		fmt.Println("expired key")
 		ctx.kv.Mu.Lock()
 		delete(ctx.kv.Kv, key)
 		ctx.kv.Mu.Unlock()

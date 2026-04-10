@@ -10,7 +10,7 @@ type ExpireCommand struct{}
 
 func (c *ExpireCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value {
 	if len(args) != 2 {
-		return resp.NewError("(error) ERR wrong number of arguments for 'expire' command")
+		return resp.NewError("ERR wrong number of arguments for 'expire' command")
 	}
 
 	var result int
@@ -21,7 +21,9 @@ func (c *ExpireCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Val
 	}
 	t := time.Now().Add(time.Duration(i64) * time.Second)
 
+	ctx.kv.Mu.RLock()
 	_, ok := ctx.kv.Kv[key]
+	ctx.kv.Mu.RUnlock()
 	if ok {
 		ctx.et.Mu.Lock()
 		ctx.et.Et[key] = t

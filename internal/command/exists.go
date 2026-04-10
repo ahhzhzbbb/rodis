@@ -12,7 +12,9 @@ func (c *ExistsCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Val
 	var result int
 
 	for _, arg := range args {
+		ctx.kv.Mu.RLock()
 		_, ok := ctx.kv.Kv[arg.Bulk]
+		ctx.kv.Mu.RUnlock()
 		if ok {
 			result++
 		}
