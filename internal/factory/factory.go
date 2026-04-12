@@ -14,4 +14,5 @@ var CommandRegistry = map[string]func() command.Command{
 	"DEL":     func() command.Command { return &command.DelCommand{} },
 	"EXISTS":  func() command.Command { return &command.ExistsCommand{} },
 	"EXPIRE":  func() command.Command { return &command.ExpireCommand{} },
+	"CONFIG":  func() command.Command { return &command.ConfigCommand{} },
 }

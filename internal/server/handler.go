@@ -16,44 +16,44 @@ func (s *Server) handleConnection(conn net.Conn) {
 	rp := resp.NewResp(conn)
 
 	for {
-		var response resp.Value
-		decoder, err := rp.ParseRESP()
+		request, err := rp.ParseRESP()
 		if err != nil {
 			if err != io.EOF {
 				fmt.Println("failed to parse clients request")
 			} else {
 				fmt.Printf("client %s disconnected\n", conn.RemoteAddr())
+				return
 			}
-			fmt.Println("Error: ", err)
-			s.removeConnection(conn)
-			return
-		}
-		fmt.Printf("request: %v\n", decoder)
-		if len(decoder.Array) == 0 {
+			// s.removeConnection(conn)
 			continue
 		}
-		typeOfCommand := decoder.Array[0].Bulk
+		fmt.Printf("request: %v\n", request)
 
-		typeOfCommand = strings.ToUpper(typeOfCommand)
-
-		creator, ok := factory.CommandRegistry[typeOfCommand]
-		if !ok {
-			response = resp.NewError(fmt.Sprintf("ERR unknown command '%s', with args beginning with: ", typeOfCommand))
-		} else {
-			comm := creator()
-			response = comm.Execute(decoder.Array[1:], command.NewCommandContext(s.kv, s.et))
+		if len(request.Array) == 0 {
+			continue
 		}
 
+		response := s.handleRequest(request)
 		fmt.Printf("response: %v\n", response)
 
-		encoder := response.Marshal()
-		err = rp.Writer(encoder)
-		if err != nil {
-			//do something
-		}
+		rp.WriteBytes(response)
 	}
 }
 
+func (s *Server) handleRequest(request resp.Value) resp.Value {
+	var result resp.Value
+	typeOfCommand := strings.ToUpper(request.Array[0].Bulk)
+
+	comCreator, ok := factory.CommandRegistry[typeOfCommand]
+	if !ok {
+		result = resp.NewError(fmt.Sprintf("ERR unknown command '%s', with args beginning with: ", typeOfCommand))
+	} else {
+		comm := comCreator()
+		result = comm.Execute(request.Array[1:], command.NewCommandContext(s.kv, s.et))
+	}
+	return result
+}
+
 func (s *Server) removeConnection(conn net.Conn) {
-	//removing connection...
+	//removing connection from registry...
 }

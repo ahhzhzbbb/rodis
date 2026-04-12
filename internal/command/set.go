@@ -16,7 +16,9 @@ func (c *SetCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value 
 
 	value := args[1].Bulk
 
+	ctx.et.Mu.RLock()
 	_, ok := ctx.et.Et[key]
+	ctx.et.Mu.RUnlock()
 	if ok {
 		ctx.et.Mu.Lock()
 		delete(ctx.et.Et, key)

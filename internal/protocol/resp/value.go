@@ -15,12 +15,13 @@ const (
 )
 
 type Value struct {
-	Typ   string
-	Str   string
-	Er    string
-	In    int
-	Bulk  string
-	Array []Value
+	Typ    string
+	Str    string
+	Er     string
+	In     int
+	Bulk   string
+	Array  []Value
+	Inline string
 }
 
 type Resp struct {
@@ -72,6 +73,13 @@ func NewBulk(msg string) Value {
 func NewNullBulk() Value {
 	return Value{
 		Typ: "null",
+	}
+}
+
+func NewArray(msg []Value) Value {
+	return Value{
+		Typ:   "array",
+		Array: msg,
 	}
 }
 

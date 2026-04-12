@@ -31,7 +31,7 @@ func (r *Resp) ParseRESP() (Value, error) {
 		// fmt.Printf("%c\n", ARRAY)
 		return r.readArray()
 	default:
-		return output, fmt.Errorf("resp: unsupported value type %q", firstByte)
+		return r.readInline(firstByte)
 	}
 }
 
@@ -111,7 +111,7 @@ func (r *Resp) readBulk() (Value, error) {
 	}
 
 	if length == -1 {
-		return v, nil
+		return NewNullBulk(), nil
 	}
 	if length < -1 {
 		return v, fmt.Errorf("resp: invalid bulk length %d", length)
@@ -164,4 +164,70 @@ func (r *Resp) readCRLF() error {
 		return fmt.Errorf("resp: expected CRLF after bulk string")
 	}
 	return nil
+}
+
+func (r *Resp) readInline(firstByte byte) (Value, error) {
+	// Read the entire inline command line
+	// firstByte is the first character of the command
+	var line []byte
+	line = append(line, firstByte)
+
+	// Read until \r\n
+	for {
+		b, err := r.reader.ReadByte()
+		if err != nil {
+			return Value{}, err
+		}
+
+		if b == '\n' {
+			// Remove trailing \r if present
+			if len(line) > 0 && line[len(line)-1] == '\r' {
+				line = line[:len(line)-1]
+			}
+			break
+		}
+		line = append(line, b)
+	}
+
+	// Parse inline command: split by spaces into command and args
+	fields := parseInlineCommand(string(line))
+
+	// Convert to RESP array format
+	v := Value{Typ: "array"}
+	v.Array = make([]Value, len(fields))
+	for i, field := range fields {
+		v.Array[i] = Value{Typ: "bulk", Bulk: field}
+	}
+
+	return v, nil
+}
+
+func parseInlineCommand(line string) []string {
+	var fields []string
+	var current []byte
+
+	for i := 0; i < len(line); i++ {
+		ch := line[i]
+		if ch == ' ' || ch == '\t' {
+			if len(current) > 0 {
+				fields = append(fields, string(current))
+				current = nil
+			}
+		} else {
+			current = append(current, ch)
+		}
+	}
+	if len(current) > 0 {
+		fields = append(fields, string(current))
+	}
+
+	return fields
+}
+
+func (r *Resp) WriteBytes(response Value) {
+	bytes := response.Marshal()
+	err := r.Writer(bytes)
+	if err != nil {
+		fmt.Println("Failed to send response to Client")
+	}
 }
