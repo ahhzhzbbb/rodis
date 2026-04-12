@@ -8,7 +8,7 @@ func (c *SetCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value 
 	if len(args) != 2 {
 		return resp.NewError("ERR wrong number of arguments for 'set' command")
 	}
-	if ctx == nil || ctx.kv == nil {
+	if ctx == nil || ctx.k == nil {
 		return resp.NewError("ERR internal server error")
 	}
 
@@ -16,18 +16,7 @@ func (c *SetCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value 
 
 	value := args[1].Bulk
 
-	ctx.et.Mu.RLock()
-	_, ok := ctx.et.Et[key]
-	ctx.et.Mu.RUnlock()
-	if ok {
-		ctx.et.Mu.Lock()
-		delete(ctx.et.Et, key)
-		ctx.et.Mu.Unlock()
-	}
-
-	ctx.kv.Mu.Lock()
-	ctx.kv.Kv[key] = value
-	ctx.kv.Mu.Unlock()
+	ctx.k.Set(key, value)
 
 	return resp.NewString("OK")
 }

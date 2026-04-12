@@ -21,13 +21,7 @@ func (c *ExpireCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Val
 	}
 	t := time.Now().Add(time.Duration(i64) * time.Second)
 
-	ctx.kv.Mu.RLock()
-	_, ok := ctx.kv.Kv[key]
-	ctx.kv.Mu.RUnlock()
-	if ok {
-		ctx.et.Mu.Lock()
-		ctx.et.Et[key] = t
-		ctx.et.Mu.Unlock()
+	if ctx.k.SetExpireTime(key, t) {
 		result++
 	}
 

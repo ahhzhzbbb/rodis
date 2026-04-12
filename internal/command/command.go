@@ -6,14 +6,12 @@ import (
 )
 
 type CommandContext struct {
-	kv *engine.KeyValue
-	et *engine.ExpireTime
+	k *engine.KeyValue
 }
 
-func NewCommandContext(kv *engine.KeyValue, et *engine.ExpireTime) *CommandContext {
+func NewCommandContext(k *engine.KeyValue) *CommandContext {
 	return &CommandContext{
-		kv: kv,
-		et: et,
+		k: k,
 	}
 }
 

@@ -10,7 +10,6 @@ type Server struct {
 	Config
 	ln net.Listener
 	kv *engine.KeyValue
-	et *engine.ExpireTime
 }
 
 func NewServer(cfg Config) *Server {
@@ -20,7 +19,6 @@ func NewServer(cfg Config) *Server {
 	return &Server{
 		Config: cfg,
 		kv:     engine.NewKeyValue(),
-		et:     engine.NewExpireTime(),
 	}
 }
 

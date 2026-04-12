@@ -49,7 +49,7 @@ func (s *Server) handleRequest(request resp.Value) resp.Value {
 		result = resp.NewError(fmt.Sprintf("ERR unknown command '%s', with args beginning with: ", typeOfCommand))
 	} else {
 		comm := comCreator()
-		result = comm.Execute(request.Array[1:], command.NewCommandContext(s.kv, s.et))
+		result = comm.Execute(request.Array[1:], command.NewCommandContext(s.kv))
 	}
 	return result
 }
