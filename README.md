@@ -1,6 +1,7 @@
 # rodis
 
 ## project structure
+```
 .
 ├── cmd
 │   ├── redis-cli
@@ -39,3 +40,4 @@
 └── temp
 
 11 directories, 25 files
+```
