@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"sync"
 	"time"
 )
@@ -25,6 +26,7 @@ func (k *KeyValue) Get(key string) (string, bool) {
 	t, ok := k.et[key]
 
 	if ok && t.Before(time.Now()) {
+		fmt.Println("hello")
 		delete(k.kv, key)
 		delete(k.et, key)
 		return "", false
@@ -39,7 +41,9 @@ func (k *KeyValue) Set(key, value string) {
 	k.Mu.Lock()
 	defer k.Mu.Unlock()
 
-	delete(k.et, key)
+	if _, exists := k.kv[key]; exists {
+		delete(k.et, key)
+	}
 	k.kv[key] = value
 }
 
@@ -57,6 +61,13 @@ func (k *KeyValue) Del(key string) bool {
 	}
 
 	return rs
+}
+
+func (k *KeyValue) DelValue(key string) {
+	k.Mu.Lock()
+	defer k.Mu.Unlock()
+
+	delete(k.kv, key)
 }
 
 func (k *KeyValue) SetExpireTime(key string, t time.Time) bool {
