@@ -36,27 +36,16 @@ func (r *Resp) ParseRESP() (Value, error) {
 }
 
 func (r *Resp) ReadLine() ([]byte, int, error) {
-	var size int
-	line := make([]byte, 0)
-
-	for {
-		b, err := r.reader.ReadByte()
-		if err != nil {
-			return nil, 0, err
-		}
-
-		size++
-		line = append(line, b)
-
-		if len(line) >= 2 &&
-			line[len(line)-2] == '\r' &&
-			line[len(line)-1] == '\n' {
-
-			line = line[:len(line)-2]
-			break
-		}
+	line, err := r.reader.ReadSlice('\n')
+	if err != nil {
+		return nil, 0, err
 	}
-	return line, size, nil
+
+	if len(line) >= 2 && line[len(line)-2] == '\r' {
+		line = line[:len(line)-2]
+	}
+
+	return line, len(line), nil
 }
 
 func (r *Resp) readNum() (x int, n int, err error) {
