@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"sync"
 	"time"
 
 	"github.com/tidwall/shardmap"
@@ -10,7 +9,7 @@ import (
 type KeyValue struct {
 	kv shardmap.Map
 	et shardmap.Map
-	Mu sync.RWMutex
+	// Mu sync.RWMutex
 }
 
 func NewKeyValue() *KeyValue {
@@ -21,9 +20,6 @@ func NewKeyValue() *KeyValue {
 }
 
 func (k *KeyValue) Get(key string) (string, bool) {
-	k.Mu.Lock()
-	defer k.Mu.Unlock()
-
 	val, ok := k.et.Get(key)
 	t, _ := val.(time.Time)
 
@@ -38,9 +34,6 @@ func (k *KeyValue) Get(key string) (string, bool) {
 }
 
 func (k *KeyValue) Set(key, value string) {
-	k.Mu.Lock()
-	defer k.Mu.Unlock()
-
 	if _, exists := k.kv.Get(key); exists {
 		k.et.Delete(key)
 	}
@@ -48,9 +41,6 @@ func (k *KeyValue) Set(key, value string) {
 }
 
 func (k *KeyValue) Del(key string) bool {
-	k.Mu.Lock()
-	defer k.Mu.Unlock()
-
 	var rs bool
 	rs = false
 
@@ -64,16 +54,10 @@ func (k *KeyValue) Del(key string) bool {
 }
 
 func (k *KeyValue) DelValue(key string) {
-	k.Mu.Lock()
-	defer k.Mu.Unlock()
-
 	k.kv.Delete(key)
 }
 
 func (k *KeyValue) SetExpireTime(key string, t time.Time) bool {
-	k.Mu.Lock()
-	defer k.Mu.Unlock()
-
 	if _, exists := k.kv.Get(key); !exists {
 		return false
 	}
