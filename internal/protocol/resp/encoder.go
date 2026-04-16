@@ -2,68 +2,59 @@ package resp
 
 import "strconv"
 
-func (v Value) Marshal() []byte {
+func (r *Resp) Marshal(v Value) {
 	switch v.Typ {
 	case "array":
-		return v.marshalArray()
+		r.marshalArray(v)
 	case "bulk":
-		return v.marshalBulk()
+		r.marshalBulk(v)
 	case "string":
-		return v.marshalString()
+		r.marshalString(v)
 	case "null":
-		return v.marshallNullBulk()
+		r.marshallNullBulk()
 	case "error":
-		return v.marshalError()
+		r.marshalError(v)
 	case "integer":
-		return v.marshalInteger()
+		r.marshalInteger(v)
 	default:
-		return []byte{}
 	}
 }
 
-func (v Value) marshalArray() []byte {
-	var bytes []byte
-	bytes = append(bytes, ARRAY)
-	bytes = append(bytes, strconv.Itoa(len(v.Array))...)
-	bytes = append(bytes, '\r', '\n')
-
+func (r *Resp) marshalArray(v Value) {
+	r.writer.WriteByte(ARRAY)
+	r.writer.WriteString(strconv.Itoa(len(v.Array)))
+	r.writer.WriteString("\r\n")
 	for _, element := range v.Array {
-		bytes = append(bytes, element.Marshal()...)
+		r.Marshal(element)
 	}
-
-	return bytes
 }
-func (v Value) marshalBulk() []byte {
-	var bytes []byte
-	bytes = append(bytes, BULK)
-	bytes = append(bytes, strconv.Itoa(len(v.Bulk))...)
-	bytes = append(bytes, '\r', '\n')
 
-	bytes = append(bytes, v.Bulk...)
-	bytes = append(bytes, '\r', '\n')
+func (r *Resp) marshalBulk(v Value) {
+	r.writer.WriteByte(BULK)
+	r.writer.WriteString(strconv.Itoa(len(v.Bulk)))
+	r.writer.WriteString("\r\n")
+	r.writer.WriteString(v.Bulk)
+	r.writer.WriteString("\r\n")
+}
 
-	return bytes
+func (r *Resp) marshalString(v Value) {
+	r.writer.WriteByte(STRING)
+	r.writer.WriteString(v.Str)
+	r.writer.WriteString("\r\n")
 }
-func (v Value) marshalString() []byte {
-	var bytes []byte
-	bytes = append(bytes, STRING)
-	bytes = append(bytes, v.Str...)
-	bytes = append(bytes, '\r', '\n')
 
-	return bytes
+func (r *Resp) marshallNullBulk() {
+	r.writer.WriteString("$-1\r\n")
 }
-func (v Value) marshallNullBulk() []byte {
-	return []byte("$-1\r\n")
-}
-func (v Value) marshalError() []byte {
-	var bytes []byte
-	bytes = append(bytes, ERROR)
-	bytes = append(bytes, v.Er...)
-	bytes = append(bytes, '\r', '\n')
 
-	return bytes
+func (r *Resp) marshalError(v Value) {
+	r.writer.WriteByte(ERROR)
+	r.writer.WriteString(v.Er)
+	r.writer.WriteString("\r\n")
 }
-func (v Value) marshalInteger() []byte {
-	bytes := []byte(string(INTEGER) + strconv.Itoa(v.In) + "\r\n")
-	return bytes
+
+func (r *Resp) marshalInteger(v Value) {
+	r.writer.WriteByte(INTEGER)
+	r.writer.WriteString(strconv.Itoa(v.In))
+	r.writer.WriteString("\r\n")
 }

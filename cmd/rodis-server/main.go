@@ -6,6 +6,6 @@ import (
 )
 
 func main() {
-	s := server.NewServer(server.Config{})
+	s := server.NewServer(server.Config{BatchSize: 64})
 	s.Start()
 }

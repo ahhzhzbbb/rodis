@@ -213,10 +213,6 @@ func parseInlineCommand(line string) []string {
 	return fields
 }
 
-func (r *Resp) WriteBytes(response Value) {
-	bytes := response.Marshal()
-	err := r.Writer(bytes)
-	if err != nil {
-		fmt.Println("Failed to send response to Client")
-	}
+func (r *Resp) WriteBytes() {
+	r.writer.Flush()
 }
