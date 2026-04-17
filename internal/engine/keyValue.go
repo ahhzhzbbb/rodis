@@ -34,9 +34,7 @@ func (k *KeyValue) Get(key string) (string, bool) {
 }
 
 func (k *KeyValue) Set(key, value string) {
-	if _, exists := k.kv.Get(key); exists {
-		k.et.Delete(key)
-	}
+	k.et.Delete(key)
 	k.kv.Set(key, value)
 }
 
@@ -44,11 +42,8 @@ func (k *KeyValue) Del(key string) bool {
 	var rs bool
 	rs = false
 
-	if _, ok := k.kv.Get(key); ok {
-		rs = true
-		k.kv.Delete(key)
-		k.et.Delete(key)
-	}
+	k.kv.Delete(key)
+	k.et.Delete(key)
 
 	return rs
 }

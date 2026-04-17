@@ -39,7 +39,7 @@ func (s *Server) loop() {
 			fmt.Println("failed to accept connection, err:", err)
 			continue
 		}
-		fmt.Println("connection estalished!")
+		// fmt.Println("connection estalished!")
 		go s.handleConnection(conn)
 	}
 }

@@ -156,12 +156,9 @@ func (r *Resp) readCRLF() error {
 }
 
 func (r *Resp) readInline(firstByte byte) (Value, error) {
-	// Read the entire inline command line
-	// firstByte is the first character of the command
 	var line []byte
 	line = append(line, firstByte)
 
-	// Read until \r\n
 	for {
 		b, err := r.reader.ReadByte()
 		if err != nil {
@@ -169,7 +166,6 @@ func (r *Resp) readInline(firstByte byte) (Value, error) {
 		}
 
 		if b == '\n' {
-			// Remove trailing \r if present
 			if len(line) > 0 && line[len(line)-1] == '\r' {
 				line = line[:len(line)-1]
 			}
@@ -178,10 +174,8 @@ func (r *Resp) readInline(firstByte byte) (Value, error) {
 		line = append(line, b)
 	}
 
-	// Parse inline command: split by spaces into command and args
 	fields := parseInlineCommand(string(line))
 
-	// Convert to RESP array format
 	v := Value{Typ: "array"}
 	v.Array = make([]Value, len(fields))
 	for i, field := range fields {
@@ -213,6 +207,10 @@ func parseInlineCommand(line string) []string {
 	return fields
 }
 
-func (r *Resp) WriteBytes() {
+func (r *Resp) WriteBytes(bytes []byte) {
+	r.writer.Write(bytes)
+}
+
+func (r *Resp) FlushWriter() {
 	r.writer.Flush()
 }

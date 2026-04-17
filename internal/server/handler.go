@@ -21,33 +21,32 @@ func (s *Server) handleConnection(conn net.Conn) {
 		for count < s.BatchSize {
 			request, err := rp.ParseRESP()
 			if err != nil {
-				if err != io.EOF {
-					fmt.Println("failed to parse clients request")
-				} else {
+				// fmt.Printf("READ ERROR: %T | %v\n", err, err)
+				if err == io.EOF {
 					fmt.Printf("client %s disconnected\n", conn.RemoteAddr())
 					return
 				}
 				// s.removeConnection(conn)
-				continue
+				return
 			}
-			fmt.Printf("request: %v\n", request)
+			// fmt.Printf("request: %v\n", request)
 
 			if len(request.Array) == 0 {
 				continue
 			}
 
 			response := s.handleRequest(request)
-			fmt.Printf("response: %v\n", response)
+			// fmt.Printf("response: %v\n", response)
 
-			rp.Marshal(response)
+			bytes := rp.Marshal(response)
+			rp.WriteBytes(bytes)
 
 			count++
 			if !rp.HasBufferedData() {
-				fmt.Println("khong co du lieu de doc...")
 				break
 			}
 		}
-		rp.WriteBytes() //flush
+		rp.FlushWriter() //flush
 	}
 }
 

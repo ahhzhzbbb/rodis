@@ -6,8 +6,8 @@ MAIN_DIR="/home/hoang/projects/rodis/cmd/rodis-server"
 PROJECT_DIR="/home/hoang/projects/rodis"
 LOG_DIR="$PROJECT_DIR/logs"
 PORT="6379"
-NUM_CONNS="100"
-NUM_REQS="2000000"
+NUM_CONNS="1000"
+NUM_REQS="3000000"
 
 mkdir -p "$LOG_DIR"
 
@@ -15,7 +15,7 @@ cd "$MAIN_DIR"
 go build -o "$PROJECT_DIR/rodis-server" .
 
 cd "$PROJECT_DIR"
-taskset -c 0,1 ./rodis-server >> /dev/null 2> "$LOG_DIR/error.log" &
+taskset -c 0,1 ./rodis-server > "$LOG_DIR/error.log" &
 PID=$!
 
 # đảm bảo server không chết ngay
@@ -35,7 +35,7 @@ sudo strace -c -p $PID 2> "$LOG_DIR/strace.log" &
 STRACE_PID=$!
 
 echo "RUNNING..."
-redis-benchmark -t set,get,ping -p $PORT -c $NUM_CONNS -n $NUM_REQS > "$LOG_DIR/bench.log" 2>&1
+redis-benchmark -t set,get,ping -p $PORT -c $NUM_CONNS -P 3000 -n $NUM_REQS > "$LOG_DIR/bench.log" 2>&1
 
 # giống Ctrl+C
 sudo kill -INT $STRACE_PID
