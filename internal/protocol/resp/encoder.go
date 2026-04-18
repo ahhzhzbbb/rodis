@@ -2,7 +2,7 @@ package resp
 
 import "strconv"
 
-func (r *Resp) Marshal(v Value) []byte {
+func (r *Resp) Marshal(v Value) error {
 	switch v.Typ {
 	case "array":
 		return r.marshalArray(v)
@@ -21,77 +21,83 @@ func (r *Resp) Marshal(v Value) []byte {
 	}
 }
 
-func (r *Resp) marshalArray(v Value) []byte {
-	// r.writer.WriteByte(ARRAY)
-	// r.writer.WriteString(strconv.Itoa(len(v.Array)))
-	// r.writer.WriteString("\r\n")
-	// for _, element := range v.Array {
-	// 	r.Marshal(element)
-	// }
-	var buf []byte
-
-	buf = append(buf, ARRAY)
-	buf = append(buf, strconv.Itoa(len(v.Array))...)
-	buf = append(buf, '\r', '\n')
-	for _, element := range v.Array {
-		buf = append(buf, r.Marshal(element)...)
+func (r *Resp) marshalArray(v Value) error {
+	if err := r.writer.WriteByte(ARRAY); err != nil {
+		return err
 	}
-
-	return buf
+	if _, err := r.writer.WriteString(strconv.Itoa(len(v.Array))); err != nil {
+		return err
+	}
+	if _, err := r.writer.WriteString("\r\n"); err != nil {
+		return err
+	}
+	for _, element := range v.Array {
+		if err := r.Marshal(element); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-func (r *Resp) marshalBulk(v Value) []byte {
-	var buf []byte
-
-	buf = append(buf, BULK)
-	buf = append(buf, strconv.Itoa(len(v.Bulk))...)
-	buf = append(buf, '\r', '\n')
-	buf = append(buf, v.Bulk...)
-	buf = append(buf, '\r', '\n')
-
-	return buf
+func (r *Resp) marshalBulk(v Value) error {
+	if err := r.writer.WriteByte(BULK); err != nil {
+		return err
+	}
+	if _, err := r.writer.WriteString(strconv.Itoa(len(v.Bulk))); err != nil {
+		return err
+	}
+	if _, err := r.writer.WriteString("\r\n"); err != nil {
+		return err
+	}
+	if _, err := r.writer.WriteString(v.Bulk); err != nil {
+		return err
+	}
+	if _, err := r.writer.WriteString("\r\n"); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (r *Resp) marshalString(v Value) []byte {
-	// r.writer.WriteByte(STRING)
-	// r.writer.WriteString(v.Str)
-	// r.writer.WriteString("\r\n")
-	var buf []byte
-
-	buf = append(buf, STRING)
-	buf = append(buf, []byte(v.Str)...)
-	buf = append(buf, '\r', '\n')
-
-	return buf
+func (r *Resp) marshalString(v Value) error {
+	if err := r.writer.WriteByte(STRING); err != nil {
+		return err
+	}
+	if _, err := r.writer.WriteString(v.Str); err != nil {
+		return err
+	}
+	if _, err := r.writer.WriteString("\r\n"); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (r *Resp) marshallNullBulk() []byte {
-	return []byte("$-1\r\n")
+func (r *Resp) marshallNullBulk() error {
+	_, err := r.writer.WriteString("$-1\r\n")
+	return err
 }
 
-func (r *Resp) marshalError(v Value) []byte {
-	// r.writer.WriteByte(ERROR)
-	// r.writer.WriteString(v.Er)
-	// r.writer.WriteString("\r\n")
-	var buf []byte
-
-	buf = append(buf, ERROR)
-	buf = append(buf, []byte(v.Er)...)
-	buf = append(buf, '\r', '\n')
-
-	return buf
+func (r *Resp) marshalError(v Value) error {
+	if err := r.writer.WriteByte(ERROR); err != nil {
+		return err
+	}
+	if _, err := r.writer.WriteString(v.Er); err != nil {
+		return err
+	}
+	if _, err := r.writer.WriteString("\r\n"); err != nil {
+		return err
+	}
+	return nil
 }
 
-func (r *Resp) marshalInteger(v Value) []byte {
-	// r.writer.WriteByte(INTEGER)
-	// r.writer.WriteString(strconv.Itoa(v.In))
-	// r.writer.WriteString("\r\n")
-
-	var buf []byte
-
-	buf = append(buf, INTEGER)
-	buf = append(buf, []byte(strconv.Itoa(v.In))...)
-	buf = append(buf, '\r', '\n')
-
-	return buf
+func (r *Resp) marshalInteger(v Value) error {
+	if err := r.writer.WriteByte(INTEGER); err != nil {
+		return err
+	}
+	if _, err := r.writer.WriteString(strconv.Itoa(v.In)); err != nil {
+		return err
+	}
+	if _, err := r.writer.WriteString("\r\n"); err != nil {
+		return err
+	}
+	return nil
 }

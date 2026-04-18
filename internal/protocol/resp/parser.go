@@ -207,10 +207,11 @@ func parseInlineCommand(line string) []string {
 	return fields
 }
 
-func (r *Resp) WriteBytes(bytes []byte) {
-	r.writer.Write(bytes)
+func (r *Resp) WriteBytes(bytes []byte) error {
+	_, err := r.writer.Write(bytes)
+	return err
 }
 
-func (r *Resp) FlushWriter() {
-	r.writer.Flush()
+func (r *Resp) FlushWriter() error {
+	return r.writer.Flush()
 }

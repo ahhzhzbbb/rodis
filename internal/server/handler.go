@@ -38,15 +38,18 @@ func (s *Server) handleConnection(conn net.Conn) {
 			response := s.handleRequest(request)
 			// fmt.Printf("response: %v\n", response)
 
-			bytes := rp.Marshal(response)
-			rp.WriteBytes(bytes)
+			if err := rp.Marshal(response); err != nil {
+				return
+			}
 
 			count++
 			if !rp.HasBufferedData() {
 				break
 			}
 		}
-		rp.FlushWriter() //flush
+		if err := rp.FlushWriter(); err != nil { //flush
+			return
+		}
 	}
 }
 
