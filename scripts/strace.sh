@@ -35,7 +35,7 @@ sudo strace -c -p $PID 2> "$LOG_DIR/strace.log" &
 STRACE_PID=$!
 
 echo "RUNNING..."
-redis-benchmark -t set,get,ping -p $PORT -c $NUM_CONNS -P 1 -n $NUM_REQS > "$LOG_DIR/bench.log" 2>&1
+redis-benchmark -t set,get,ping -p $PORT -c $NUM_CONNS -P 16 -n $NUM_REQS > "$LOG_DIR/bench.log" 2>&1
 
 # giống Ctrl+C
 sudo kill -INT $STRACE_PID

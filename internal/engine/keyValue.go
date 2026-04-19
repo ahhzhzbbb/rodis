@@ -2,20 +2,18 @@ package engine
 
 import (
 	"time"
-
-	"github.com/tidwall/shardmap"
 )
 
 type KeyValue struct {
-	kv shardmap.Map
-	et shardmap.Map
+	kv Map
+	et Map
 	// Mu sync.RWMutex
 }
 
 func NewKeyValue() *KeyValue {
 	return &KeyValue{
-		kv: *shardmap.New(1024),
-		et: *shardmap.New(1024),
+		kv: *New(1024),
+		et: *New(1024),
 	}
 }
 
