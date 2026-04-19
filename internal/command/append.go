@@ -17,12 +17,10 @@ func (c *AppendCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Val
 
 	value := args[1].Bulk
 
-	oldValue, ok := ctx.k.Get(key)
-	if ok {
-		value = oldValue + value
-		ctx.k.DelValue(key)
+	result, err := ctx.k.Append(key, value)
+	if err != nil {
+		return resp.NewError("ERR this is not string")
 	}
 
-	ctx.k.Set(key, value)
-	return resp.NewInteger(len(value))
+	return resp.NewInteger(result)
 }

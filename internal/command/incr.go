@@ -1,9 +1,9 @@
 package command
 
 import (
-	"fmt"
+	"errors"
+	"rodis/internal/engine"
 	"rodis/internal/protocol/resp"
-	"strconv"
 )
 
 type IncrCommand struct{}
@@ -12,21 +12,21 @@ func (c *IncrCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value
 	if len(args) != 1 {
 		return resp.NewError("ERR wrong number of arguments for 'incr' command")
 	}
+	if ctx == nil || ctx.k == nil {
+		return resp.NewError("ERR internal server error")
+	}
 
 	key := args[0].Bulk
-	value, ok := ctx.k.Get(key)
-	if !ok {
-		ctx.k.Set(key, "1")
-		return resp.NewInteger(1)
+	i64, err := ctx.k.Incr(key)
+	if err != nil {
+		if errors.Is(err, engine.ErrValueNotInteger) {
+			return resp.NewError("ERR value is not an integer or out of range")
+		}
+		return resp.NewError("ERR internal server error")
 	}
 
-	i64, err := strconv.ParseInt(value, 10, 64)
-	if err != nil {
+	if i64 > int64(^uint(0)>>1) {
 		return resp.NewError("ERR value is not an integer or out of range")
 	}
-	i64++
-
-	ctx.k.DelValue(key)
-	ctx.k.Set(key, fmt.Sprint(i64))
 	return resp.NewInteger(int(i64))
 }

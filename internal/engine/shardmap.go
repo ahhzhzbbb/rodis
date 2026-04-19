@@ -127,6 +127,26 @@ func (m *Map) DeleteAccept(
 	return prev, deleted
 }
 
+// Compute atomically updates a key based on its previous value.
+// The update callback runs under the shard write lock.
+func (m *Map) Compute(
+	key string,
+	update func(prev interface{}, exists bool) (newValue interface{}, err error),
+) (newValue interface{}, err error) {
+	m.initDo()
+	shard := m.choose(key)
+	m.mus[shard].Lock()
+	defer m.mus[shard].Unlock()
+
+	prev, exists := m.maps[shard].Get(key)
+	next, err := update(prev, exists)
+	if err != nil {
+		return nil, err
+	}
+	m.maps[shard].Set(key, next)
+	return next, nil
+}
+
 // Len returns the number of values in map.
 func (m *Map) Len() int {
 	m.initDo()

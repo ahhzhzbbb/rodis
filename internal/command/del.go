@@ -1,6 +1,8 @@
 package command
 
-import "rodis/internal/protocol/resp"
+import (
+	"rodis/internal/protocol/resp"
+)
 
 type DelCommand struct{}
 
