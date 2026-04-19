@@ -12,5 +12,9 @@ func (c *PingCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value
 		return args[0]
 	}
 
+	if ctx == nil || ctx.k == nil {
+		return resp.NewError("ERR internal server error")
+	}
+
 	return resp.NewString("PONG")
 }

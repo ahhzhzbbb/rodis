@@ -8,6 +8,7 @@ func (c *SetCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value 
 	if len(args) != 2 {
 		return resp.NewError("ERR wrong number of arguments for 'set' command")
 	}
+
 	if ctx == nil || ctx.k == nil {
 		return resp.NewError("ERR internal server error")
 	}

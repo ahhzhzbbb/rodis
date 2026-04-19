@@ -13,6 +13,10 @@ func (c *ExpireCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Val
 		return resp.NewError("ERR wrong number of arguments for 'expire' command")
 	}
 
+	if ctx == nil || ctx.k == nil {
+		return resp.NewError("ERR internal server error")
+	}
+
 	var result int
 	key := args[0].Bulk
 	i64, err := strconv.ParseInt((args[1].Bulk), 10, 64)

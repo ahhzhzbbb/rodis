@@ -12,6 +12,10 @@ func (c *DelCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value 
 		return resp.NewError("ERR wrong number of arguments for 'del' command")
 	}
 
+	if ctx == nil || ctx.k == nil {
+		return resp.NewError("ERR internal server error")
+	}
+
 	for _, arg := range args {
 		key := arg.Bulk
 

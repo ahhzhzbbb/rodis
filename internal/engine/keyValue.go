@@ -109,6 +109,11 @@ func (k *KeyValue) SetExpireTime(key string, t time.Time) bool {
 		return false
 	}
 
+	if k.CheckExpireKey(key) {
+		k.kv.Delete(key)
+		return false
+	}
+
 	k.et.Set(key, t)
 
 	return true

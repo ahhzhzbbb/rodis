@@ -9,6 +9,10 @@ func (c *ExistsCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Val
 		return resp.NewError("ERR wrong number of arguments for 'exists' command")
 	}
 
+	if ctx == nil || ctx.k == nil {
+		return resp.NewError("ERR internal server error")
+	}
+
 	var result int
 
 	for _, arg := range args {
