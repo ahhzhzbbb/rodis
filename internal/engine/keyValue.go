@@ -1,84 +1,61 @@
 package engine
 
 import (
-	"fmt"
-	"sync"
 	"time"
 )
 
 type KeyValue struct {
-	kv map[string]string
-	et map[string]time.Time
-	Mu sync.RWMutex
+	kv Map
+	et Map
+	// Mu sync.RWMutex
 }
 
 func NewKeyValue() *KeyValue {
 	return &KeyValue{
-		kv: make(map[string]string),
-		et: make(map[string]time.Time),
+		kv: *New(1024),
+		et: *New(1024),
 	}
 }
 
 func (k *KeyValue) Get(key string) (string, bool) {
-	k.Mu.Lock()
-	defer k.Mu.Unlock()
-
-	t, ok := k.et[key]
+	val, ok := k.et.Get(key)
+	t, _ := val.(time.Time)
 
 	if ok && t.Before(time.Now()) {
-		fmt.Println("hello")
-		delete(k.kv, key)
-		delete(k.et, key)
+		k.kv.Delete(key)
+		k.et.Delete(key)
 		return "", false
 	}
-
-	res, exists := k.kv[key]
-
+	temp, exists := k.kv.Get(key)
+	res, _ := temp.(string)
 	return res, exists
 }
 
 func (k *KeyValue) Set(key, value string) {
-	k.Mu.Lock()
-	defer k.Mu.Unlock()
-
-	if _, exists := k.kv[key]; exists {
-		delete(k.et, key)
-	}
-	k.kv[key] = value
+	k.et.Delete(key)
+	k.kv.Set(key, value)
 }
 
 func (k *KeyValue) Del(key string) bool {
-	k.Mu.Lock()
-	defer k.Mu.Unlock()
-
 	var rs bool
 	rs = false
 
-	if _, ok := k.kv[key]; ok {
-		rs = true
-		delete(k.kv, key)
-		delete(k.et, key)
-	}
+	k.kv.Delete(key)
+	k.et.Delete(key)
 
 	return rs
 }
 
 func (k *KeyValue) DelValue(key string) {
-	k.Mu.Lock()
-	defer k.Mu.Unlock()
-
-	delete(k.kv, key)
+	k.kv.Delete(key)
 }
 
 func (k *KeyValue) SetExpireTime(key string, t time.Time) bool {
-	k.Mu.Lock()
-	defer k.Mu.Unlock()
-
-	if _, exists := k.kv[key]; !exists {
+	if _, exists := k.kv.Get(key); !exists {
 		return false
 	}
 
-	k.et[key] = t
+	k.et.Set(key, t)
 
 	return true
 }

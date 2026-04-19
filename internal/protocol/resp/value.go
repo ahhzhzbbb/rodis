@@ -30,7 +30,7 @@ type Resp struct {
 }
 
 func NewResp(rw io.ReadWriter) *Resp {
-	return &Resp{reader: bufio.NewReader(rw), writer: bufio.NewWriter(rw)}
+	return &Resp{reader: bufio.NewReader(rw), writer: bufio.NewWriterSize(rw, 64*1024)}
 }
 
 func (r *Resp) Writer(bytes []byte) error {
@@ -39,7 +39,7 @@ func (r *Resp) Writer(bytes []byte) error {
 		fmt.Println("failed to write")
 		return err
 	}
-	return r.writer.Flush()
+	return nil
 }
 
 func NewError(msg string) Value {
@@ -81,6 +81,10 @@ func NewArray(msg []Value) Value {
 		Typ:   "array",
 		Array: msg,
 	}
+}
+
+func (r *Resp) HasBufferedData() bool {
+	return r.reader.Buffered() > 0
 }
 
 // func NewArray(values []Value) {

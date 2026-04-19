@@ -16,27 +16,40 @@ func (s *Server) handleConnection(conn net.Conn) {
 	rp := resp.NewResp(conn)
 
 	for {
-		request, err := rp.ParseRESP()
-		if err != nil {
-			if err != io.EOF {
-				fmt.Println("failed to parse clients request")
-			} else {
-				fmt.Printf("client %s disconnected\n", conn.RemoteAddr())
+		count := 0
+
+		for count < s.BatchSize {
+			request, err := rp.ParseRESP()
+			if err != nil {
+				// fmt.Printf("READ ERROR: %T | %v\n", err, err)
+				if err == io.EOF {
+					fmt.Printf("client %s disconnected\n", conn.RemoteAddr())
+					return
+				}
+				// s.removeConnection(conn)
 				return
 			}
-			// s.removeConnection(conn)
-			continue
+			// fmt.Printf("request: %v\n", request)
+
+			if len(request.Array) == 0 {
+				continue
+			}
+
+			response := s.handleRequest(request)
+			// fmt.Printf("response: %v\n", response)
+
+			if err := rp.Marshal(response); err != nil {
+				return
+			}
+
+			count++
+			if !rp.HasBufferedData() {
+				break
+			}
 		}
-		fmt.Printf("request: %v\n", request)
-
-		if len(request.Array) == 0 {
-			continue
+		if err := rp.FlushWriter(); err != nil { //flush
+			return
 		}
-
-		response := s.handleRequest(request)
-		fmt.Printf("response: %v\n", response)
-
-		rp.WriteBytes(response)
 	}
 }
 

@@ -36,27 +36,16 @@ func (r *Resp) ParseRESP() (Value, error) {
 }
 
 func (r *Resp) ReadLine() ([]byte, int, error) {
-	var size int
-	line := make([]byte, 0)
-
-	for {
-		b, err := r.reader.ReadByte()
-		if err != nil {
-			return nil, 0, err
-		}
-
-		size++
-		line = append(line, b)
-
-		if len(line) >= 2 &&
-			line[len(line)-2] == '\r' &&
-			line[len(line)-1] == '\n' {
-
-			line = line[:len(line)-2]
-			break
-		}
+	line, err := r.reader.ReadSlice('\n')
+	if err != nil {
+		return nil, 0, err
 	}
-	return line, size, nil
+
+	if len(line) >= 2 && line[len(line)-2] == '\r' {
+		line = line[:len(line)-2]
+	}
+
+	return line, len(line), nil
 }
 
 func (r *Resp) readNum() (x int, n int, err error) {
@@ -167,12 +156,9 @@ func (r *Resp) readCRLF() error {
 }
 
 func (r *Resp) readInline(firstByte byte) (Value, error) {
-	// Read the entire inline command line
-	// firstByte is the first character of the command
 	var line []byte
 	line = append(line, firstByte)
 
-	// Read until \r\n
 	for {
 		b, err := r.reader.ReadByte()
 		if err != nil {
@@ -180,7 +166,6 @@ func (r *Resp) readInline(firstByte byte) (Value, error) {
 		}
 
 		if b == '\n' {
-			// Remove trailing \r if present
 			if len(line) > 0 && line[len(line)-1] == '\r' {
 				line = line[:len(line)-1]
 			}
@@ -189,10 +174,8 @@ func (r *Resp) readInline(firstByte byte) (Value, error) {
 		line = append(line, b)
 	}
 
-	// Parse inline command: split by spaces into command and args
 	fields := parseInlineCommand(string(line))
 
-	// Convert to RESP array format
 	v := Value{Typ: "array"}
 	v.Array = make([]Value, len(fields))
 	for i, field := range fields {
@@ -224,10 +207,11 @@ func parseInlineCommand(line string) []string {
 	return fields
 }
 
-func (r *Resp) WriteBytes(response Value) {
-	bytes := response.Marshal()
-	err := r.Writer(bytes)
-	if err != nil {
-		fmt.Println("Failed to send response to Client")
-	}
+func (r *Resp) WriteBytes(bytes []byte) error {
+	_, err := r.writer.Write(bytes)
+	return err
+}
+
+func (r *Resp) FlushWriter() error {
+	return r.writer.Flush()
 }
