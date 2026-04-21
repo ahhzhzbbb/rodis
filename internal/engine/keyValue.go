@@ -2,9 +2,10 @@ package engine
 
 import (
 	"errors"
-	"fmt"
+	"math"
 	"math/rand"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -14,6 +15,7 @@ type KeyValue struct {
 	kv   Map
 	et   Map
 	keys []string
+	mu   sync.RWMutex
 }
 
 type Entry struct {
@@ -30,10 +32,10 @@ func NewKeyValue() *KeyValue {
 
 func (k *KeyValue) Get(key string) (string, bool) {
 
-	// if k.CheckExpireKey(key) {
-	// 	k.Del(key)
-	// 	return "", false
-	// }
+	if k.CheckExpireKey(key) {
+		k.Del(key)
+		return "", false
+	}
 
 	temp, exists := k.kv.Get(key)
 	res, _ := temp.(string)
@@ -65,6 +67,9 @@ func (k *KeyValue) Incr(key string) (int64, error) {
 
 		i64, err := strconv.ParseInt(current, 10, 64)
 		if err != nil {
+			return nil, ErrValueNotInteger
+		}
+		if i64 == math.MaxInt64 {
 			return nil, ErrValueNotInteger
 		}
 
@@ -133,8 +138,16 @@ func (k *KeyValue) SetExpireTime(key string, t time.Time) bool {
 		return false
 	}
 
-	k.et.Set(key, Entry{time: t, index: len(k.keys)})
-	k.keys = append(k.keys, key)
+	if val, ok := k.et.Get(key); ok {
+		temp := val.(Entry)
+		oldIdx := temp.index
+		k.et.Set(key, Entry{time: t, index: oldIdx})
+	} else {
+		k.mu.Lock()
+		k.et.Set(key, Entry{time: t, index: len(k.keys)})
+		k.keys = append(k.keys, key)
+		k.mu.Unlock()
+	}
 
 	return true
 }
@@ -156,8 +169,9 @@ func (k *KeyValue) DeleteKeys(sampleSize int, expireThreshold float64, timeBudge
 
 	for {
 		removedKeyNums := 0.0
-
+		k.mu.RLock()
 		totalKeys := len(k.keys)
+		k.mu.RUnlock()
 		if totalKeys == 0 {
 			return
 		}
@@ -165,12 +179,18 @@ func (k *KeyValue) DeleteKeys(sampleSize int, expireThreshold float64, timeBudge
 		actualSampleSize := min(totalKeys, sampleSize)
 
 		for range actualSampleSize {
+			k.mu.RLock()
+			if len(k.keys) == 0 {
+				k.mu.RUnlock()
+				break
+			}
 			idx := rand.Intn(len(k.keys))
 			key := k.keys[idx]
+			k.mu.RUnlock()
 
 			if k.CheckExpireKey(key) {
 				if ok := k.Del(key); ok {
-					fmt.Printf("Deleted Key: %s\n", key)
+					// fmt.Printf("Deleted Key: %s\n", key)
 					removedKeyNums++
 				}
 			}
@@ -187,6 +207,8 @@ func (k *KeyValue) DeleteKeys(sampleSize int, expireThreshold float64, timeBudge
 }
 
 func (k *KeyValue) removeAtIndex(index int) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
 	if index < 0 || index >= len(k.keys) {
 		return
 	}

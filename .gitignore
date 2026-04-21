@@ -4,3 +4,4 @@ roadmap
 cmd/redis-server/dump.rdb
 logs/
 dump.rdb
+rodis-server
