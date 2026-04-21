@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"rodis/internal/engine"
+	"time"
 )
 
 type Server struct {
@@ -28,6 +29,9 @@ func (s *Server) Start() bool {
 		return false
 	}
 	s.ln = ln
+
+	go s.runActiveExpiration()
+
 	s.loop()
 	return true
 }
@@ -41,5 +45,12 @@ func (s *Server) loop() {
 		}
 		// fmt.Println("connection estalished!")
 		go s.handleConnection(conn)
+	}
+}
+
+func (s *Server) runActiveExpiration() {
+	for {
+		time.Sleep(time.Duration(s.Expire.CycleIntervalMs) * time.Millisecond)
+		s.kv.DeleteKeys(s.Expire.SampleSize, s.Expire.ExpireThreshold, s.Expire.TimeBudgetMs)
 	}
 }
