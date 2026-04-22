@@ -2,7 +2,7 @@ package resp
 
 import "strconv"
 
-func (r *Resp) Marshal(v Value) error {
+func (r *Resp) Marshal(v Payload) error {
 	switch v.Typ {
 	case "array":
 		return r.marshalArray(v)
@@ -21,7 +21,7 @@ func (r *Resp) Marshal(v Value) error {
 	}
 }
 
-func (r *Resp) marshalArray(v Value) error {
+func (r *Resp) marshalArray(v Payload) error {
 	if err := r.writer.WriteByte(ARRAY); err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func (r *Resp) marshalArray(v Value) error {
 	return nil
 }
 
-func (r *Resp) marshalBulk(v Value) error {
+func (r *Resp) marshalBulk(v Payload) error {
 	if err := r.writer.WriteByte(BULK); err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func (r *Resp) marshalBulk(v Value) error {
 	return nil
 }
 
-func (r *Resp) marshalString(v Value) error {
+func (r *Resp) marshalString(v Payload) error {
 	if err := r.writer.WriteByte(STRING); err != nil {
 		return err
 	}
@@ -76,7 +76,7 @@ func (r *Resp) marshallNullBulk() error {
 	return err
 }
 
-func (r *Resp) marshalError(v Value) error {
+func (r *Resp) marshalError(v Payload) error {
 	if err := r.writer.WriteByte(ERROR); err != nil {
 		return err
 	}
@@ -89,7 +89,7 @@ func (r *Resp) marshalError(v Value) error {
 	return nil
 }
 
-func (r *Resp) marshalInteger(v Value) error {
+func (r *Resp) marshalInteger(v Payload) error {
 	if err := r.writer.WriteByte(INTEGER); err != nil {
 		return err
 	}

@@ -4,7 +4,7 @@ import "rodis/internal/protocol/resp"
 
 type ConfigCommand struct{}
 
-func (c *ConfigCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value {
-	temp := make([]resp.Value, 0)
+func (c *ConfigCommand) Execute(args []resp.Payload, ctx *CommandContext) resp.Payload {
+	temp := make([]resp.Payload, 0)
 	return resp.NewArray(temp)
 }

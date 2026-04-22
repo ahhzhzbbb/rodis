@@ -4,7 +4,7 @@ import "rodis/internal/protocol/resp"
 
 type AppendCommand struct{}
 
-func (c *AppendCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value {
+func (c *AppendCommand) Execute(args []resp.Payload, ctx *CommandContext) resp.Payload {
 	if len(args) != 2 {
 		return resp.NewError("ERR wrong number of arguments for 'append' command")
 	}

@@ -53,8 +53,8 @@ func (s *Server) handleConnection(conn net.Conn) {
 	}
 }
 
-func (s *Server) handleRequest(request resp.Value) resp.Value {
-	var result resp.Value
+func (s *Server) handleRequest(request resp.Payload) resp.Payload {
+	var result resp.Payload
 	typeOfCommand := strings.ToUpper(request.Array[0].Bulk)
 
 	comCreator, ok := factory.CommandRegistry[typeOfCommand]

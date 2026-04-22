@@ -6,7 +6,7 @@ import (
 
 type GetCommand struct{}
 
-func (c *GetCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value {
+func (c *GetCommand) Execute(args []resp.Payload, ctx *CommandContext) resp.Payload {
 	if len(args) != 1 {
 		return resp.NewError("ERR wrong number of arguments for 'get' command")
 	}

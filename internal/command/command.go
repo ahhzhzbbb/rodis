@@ -16,5 +16,5 @@ func NewCommandContext(k *engine.KeyValue) *CommandContext {
 }
 
 type Command interface {
-	Execute(args []resp.Value, ctx *CommandContext) resp.Value
+	Execute(args []resp.Payload, ctx *CommandContext) resp.Payload
 }

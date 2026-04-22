@@ -6,8 +6,8 @@ import (
 	"strconv"
 )
 
-func (r *Resp) ParseRESP() (Value, error) {
-	output := Value{}
+func (r *Resp) ParseRESP() (Payload, error) {
+	output := Payload{}
 	firstByte, err := r.reader.ReadByte()
 	if err != nil {
 		return output, err
@@ -61,8 +61,8 @@ func (r *Resp) readNum() (x int, n int, err error) {
 	return int(i64), n, nil
 }
 
-func (r *Resp) readInterger() (Value, error) {
-	v := Value{Typ: "integer"}
+func (r *Resp) readInterger() (Payload, error) {
+	v := Payload{Typ: "integer"}
 	num, _, err := r.readNum()
 	if err != nil {
 		return v, err
@@ -71,8 +71,8 @@ func (r *Resp) readInterger() (Value, error) {
 	return v, nil
 }
 
-func (r *Resp) readString() (Value, error) {
-	v := Value{Typ: "string"}
+func (r *Resp) readString() (Payload, error) {
+	v := Payload{Typ: "string"}
 	line, _, err := r.ReadLine()
 	if err != nil {
 		return v, err
@@ -81,8 +81,8 @@ func (r *Resp) readString() (Value, error) {
 	return v, nil
 }
 
-func (r *Resp) readError() (Value, error) {
-	v := Value{Typ: "error"}
+func (r *Resp) readError() (Payload, error) {
+	v := Payload{Typ: "error"}
 	line, _, err := r.ReadLine()
 	if err != nil {
 		return v, err
@@ -91,8 +91,8 @@ func (r *Resp) readError() (Value, error) {
 	return v, nil
 }
 
-func (r *Resp) readBulk() (Value, error) {
-	v := Value{}
+func (r *Resp) readBulk() (Payload, error) {
+	v := Payload{}
 	v.Typ = "bulk"
 	length, _, err := r.readNum()
 	if err != nil {
@@ -119,8 +119,8 @@ func (r *Resp) readBulk() (Value, error) {
 	return v, nil
 }
 
-func (r *Resp) readArray() (Value, error) {
-	v := Value{}
+func (r *Resp) readArray() (Payload, error) {
+	v := Payload{}
 	v.Typ = "array"
 
 	length, _, err := r.readNum()
@@ -134,7 +134,7 @@ func (r *Resp) readArray() (Value, error) {
 		return v, fmt.Errorf("resp: invalid array length %d", length)
 	}
 
-	v.Array = make([]Value, length)
+	v.Array = make([]Payload, length)
 	for i := range v.Array {
 		v.Array[i], err = r.ParseRESP()
 		if err != nil {
@@ -155,14 +155,14 @@ func (r *Resp) readCRLF() error {
 	return nil
 }
 
-func (r *Resp) readInline(firstByte byte) (Value, error) {
+func (r *Resp) readInline(firstByte byte) (Payload, error) {
 	var line []byte
 	line = append(line, firstByte)
 
 	for {
 		b, err := r.reader.ReadByte()
 		if err != nil {
-			return Value{}, err
+			return Payload{}, err
 		}
 
 		if b == '\n' {
@@ -176,10 +176,10 @@ func (r *Resp) readInline(firstByte byte) (Value, error) {
 
 	fields := parseInlineCommand(string(line))
 
-	v := Value{Typ: "array"}
-	v.Array = make([]Value, len(fields))
+	v := Payload{Typ: "array"}
+	v.Array = make([]Payload, len(fields))
 	for i, field := range fields {
-		v.Array[i] = Value{Typ: "bulk", Bulk: field}
+		v.Array[i] = Payload{Typ: "bulk", Bulk: field}
 	}
 
 	return v, nil

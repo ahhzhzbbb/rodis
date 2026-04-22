@@ -4,7 +4,7 @@ import "rodis/internal/protocol/resp"
 
 type SetCommand struct{}
 
-func (c *SetCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value {
+func (c *SetCommand) Execute(args []resp.Payload, ctx *CommandContext) resp.Payload {
 	if len(args) != 2 {
 		return resp.NewError("ERR wrong number of arguments for 'set' command")
 	}
@@ -17,7 +17,7 @@ func (c *SetCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value 
 
 	value := args[1].Bulk
 
-	ctx.k.Set(key, value)
+	ctx.k.Set(key, "string", value)
 
 	return resp.NewString("OK")
 }

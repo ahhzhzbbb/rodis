@@ -4,7 +4,7 @@ import "rodis/internal/protocol/resp"
 
 type ExistsCommand struct{}
 
-func (c *ExistsCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value {
+func (c *ExistsCommand) Execute(args []resp.Payload, ctx *CommandContext) resp.Payload {
 	if len(args) == 0 {
 		return resp.NewError("ERR wrong number of arguments for 'exists' command")
 	}

@@ -6,7 +6,7 @@ import (
 
 type DelCommand struct{}
 
-func (c *DelCommand) Execute(args []resp.Value, ctx *CommandContext) resp.Value {
+func (c *DelCommand) Execute(args []resp.Payload, ctx *CommandContext) resp.Payload {
 	var count int
 	if len(args) == 0 {
 		return resp.NewError("ERR wrong number of arguments for 'del' command")
