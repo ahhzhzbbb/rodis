@@ -17,7 +17,7 @@ func (c *SetCommand) Execute(args []resp.Payload, ctx *CommandContext) resp.Payl
 
 	value := args[1].Bulk
 
-	ctx.k.Set(key, "string", value)
+	ctx.k.Set(key, value)
 
 	return resp.NewString("OK")
 }

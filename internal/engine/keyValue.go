@@ -30,19 +30,16 @@ func NewKeyValue() *KeyValue {
 	}
 }
 
-func (k *KeyValue) Get(key string) (string, bool) {
-
+func (k *KeyValue) Get(key string) (any, bool) {
 	if k.CheckExpireKey(key) {
 		k.Del(key)
 		return "", false
 	}
 
-	temp, exists := k.kv.Get(key)
-	res, _ := temp.(string)
-	return res, exists
+	return k.kv.Get(key)
 }
 
-func (k *KeyValue) Set(key, value string) {
+func (k *KeyValue) Set(key string, value any) {
 	k.et.Delete(key)
 	k.kv.Set(key, value)
 }
@@ -124,10 +121,6 @@ func (k *KeyValue) Del(key string) bool {
 	return ok1
 }
 
-func (k *KeyValue) DelValue(key string) {
-	k.kv.Delete(key)
-}
-
 func (k *KeyValue) SetExpireTime(key string, t time.Time) bool {
 	if _, exists := k.kv.Get(key); !exists {
 		return false
@@ -163,7 +156,7 @@ func (k *KeyValue) CheckExpireKey(key string) bool {
 	return false
 }
 
-func (k *KeyValue) DeleteKeys(sampleSize int, expireThreshold float64, timeBudgetMs int) {
+func (k *KeyValue) ActiveExpiration(sampleSize int, expireThreshold float64, timeBudgetMs int) {
 	startTime := time.Now()
 	budget := time.Duration(timeBudgetMs) * time.Millisecond
 

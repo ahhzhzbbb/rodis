@@ -22,5 +22,5 @@ func (c *GetCommand) Execute(args []resp.Payload, ctx *CommandContext) resp.Payl
 		return resp.NewNullBulk()
 	}
 
-	return resp.NewBulk(value)
+	return resp.NewBulk(value.(string))
 }

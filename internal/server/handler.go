@@ -29,14 +29,14 @@ func (s *Server) handleConnection(conn net.Conn) {
 				// s.removeConnection(conn)
 				return
 			}
-			// fmt.Printf("request: %v\n", request)
+			fmt.Printf("request: %v\n", request)
 
 			if len(request.Array) == 0 {
 				continue
 			}
 
 			response := s.handleRequest(request)
-			// fmt.Printf("response: %v\n", response)
+			fmt.Printf("response: %v\n", response)
 
 			if err := rp.Marshal(response); err != nil {
 				return

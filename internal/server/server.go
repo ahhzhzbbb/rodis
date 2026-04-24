@@ -51,6 +51,6 @@ func (s *Server) loop() {
 func (s *Server) runActiveExpiration() {
 	for {
 		time.Sleep(time.Duration(s.Expire.CycleIntervalMs) * time.Millisecond)
-		s.kv.DeleteKeys(s.Expire.SampleSize, s.Expire.ExpireThreshold, s.Expire.TimeBudgetMs)
+		s.kv.ActiveExpiration(s.Expire.SampleSize, s.Expire.ExpireThreshold, s.Expire.TimeBudgetMs)
 	}
 }
