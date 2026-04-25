@@ -16,11 +16,14 @@ func (c *GetCommand) Execute(args []resp.Payload, ctx *CommandContext) resp.Payl
 
 	key := args[0].Bulk
 
-	value, ok := ctx.k.Get(key)
+	value, ok, err := ctx.k.GetString(key)
+	if err != nil {
+		return resp.NewError(err.Error())
+	}
 
 	if !ok {
 		return resp.NewNullBulk()
 	}
 
-	return resp.NewBulk(value.(string))
+	return resp.NewBulk(value)
 }

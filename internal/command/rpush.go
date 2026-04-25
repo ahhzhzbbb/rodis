@@ -6,7 +6,7 @@ type RpushCommand struct{}
 
 func (c *RpushCommand) Execute(args []resp.Payload, ctx *CommandContext) resp.Payload {
 	if len(args) < 2 {
-		return resp.NewError("ERR wrong number of arguments for 'lpush' command")
+		return resp.NewError("ERR wrong number of arguments for 'rpush' command")
 	}
 
 	if ctx == nil || ctx.k == nil {
@@ -21,7 +21,10 @@ func (c *RpushCommand) Execute(args []resp.Payload, ctx *CommandContext) resp.Pa
 		elements[i-1] = args[i].Bulk
 	}
 
-	ctx.k.SetList(key, elements)
+	res, err := ctx.k.SetList(key, false, elements)
+	if err != nil {
+		return resp.NewError(err.Error())
+	}
 
-	return resp.NewInteger(len(args) - 1)
+	return resp.NewInteger(res)
 }

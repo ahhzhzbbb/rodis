@@ -34,9 +34,11 @@ func NewList(args []string) *List {
 	return &res
 }
 
-func (l *List) LinkToList(newList *List) {
+func (l *List) LinkToList(newList *List) (headList *Node) {
 	l.tail.next = newList.head
 	l.tail = newList.tail
+	headList = l.head
+	return headList
 }
 
 func (l *List) Len() int {
@@ -52,26 +54,45 @@ func (l *List) Len() int {
 	return res
 }
 
-func (k *KeyValue) SetList(key string, elements []string) {
+//===================================LIST=================================
+
+func (k *KeyValue) SetList(key string, lPush bool, elements []string) (res int, err error) {
 	list := NewList(elements)
-	oldValue, exist := k.Get(key)
+	if k.CheckExpireKey(key) {
+		ok := k.Del(key)
+		if !ok {
+			return 0, ErrInternal
+		}
+	}
+	oldValue, exist := k.kv.Get(key)
 	if !exist {
 		obj := NewObject(LIST, list)
-		k.Set(key, obj)
+		k.kv.Set(key, obj)
+		res = list.Len()
 	} else {
 		temp := oldValue.(*Object)
 		if temp.typ == LIST {
 			oldList := temp.value.(*List)
-			oldList.LinkToList(list)
+			if lPush {
+				oldList.head = list.LinkToList(oldList)
+			} else {
+				oldList.LinkToList(list)
+			}
+			return oldList.Len(), err
+		} else {
+			err = ErrWrongType
 		}
 	}
+	return res, err
 }
 
-func (k *KeyValue) GetList(key string) []string {
-	var res []string
-	val, ok := k.Get(key)
+func (k *KeyValue) GetList(key string) (values []string, found bool, err error) {
+	prev, ok := k.kv.Get(key)
 	if ok {
-		obj := val.(*Object)
+		obj := prev.(*Object)
+		if obj.typ != LIST {
+			return values, found, ErrWrongType
+		}
 		oldList := obj.value.(*List)
 		cur := oldList.head
 		for {
@@ -79,11 +100,12 @@ func (k *KeyValue) GetList(key string) []string {
 				break
 			}
 
-			res = append(res, cur.val)
+			values = append(values, cur.val)
 
 			cur = cur.next
 		}
+		found = true
 	}
 
-	return res
+	return values, found, err
 }

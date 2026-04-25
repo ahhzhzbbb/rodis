@@ -1,8 +1,6 @@
 package command
 
 import (
-	"errors"
-	"rodis/internal/engine"
 	"rodis/internal/protocol/resp"
 )
 
@@ -17,12 +15,13 @@ func (c *IncrCommand) Execute(args []resp.Payload, ctx *CommandContext) resp.Pay
 	}
 
 	key := args[0].Bulk
-	i64, err := ctx.k.Incr(key)
+	i64, err := ctx.k.IncrString(key)
 	if err != nil {
-		if errors.Is(err, engine.ErrValueNotInteger) {
-			return resp.NewError("ERR value is not an integer or out of range")
-		}
-		return resp.NewError("ERR internal server error")
+		// if errors.Is(err, engine.ErrNotInteger) {
+		// 	return resp.NewError("ERR value is not an integer or out of range")
+		// }
+		// return resp.NewError("ERR internal server error")
+		return resp.NewError(err.Error())
 	}
 
 	if i64 > int64(^uint(0)>>1) {

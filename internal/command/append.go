@@ -17,9 +17,9 @@ func (c *AppendCommand) Execute(args []resp.Payload, ctx *CommandContext) resp.P
 
 	value := args[1].Bulk
 
-	result, err := ctx.k.Append(key, value)
+	result, err := ctx.k.AppendString(key, value)
 	if err != nil {
-		return resp.NewError("ERR this is not string")
+		return resp.NewError(err.Error())
 	}
 
 	return resp.NewInteger(result)

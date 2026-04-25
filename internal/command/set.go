@@ -17,7 +17,9 @@ func (c *SetCommand) Execute(args []resp.Payload, ctx *CommandContext) resp.Payl
 
 	value := args[1].Bulk
 
-	ctx.k.Set(key, value)
-
+	err := ctx.k.SetString(key, value)
+	if err != nil {
+		return resp.NewError(err.Error())
+	}
 	return resp.NewString("OK")
 }

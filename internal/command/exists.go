@@ -13,13 +13,12 @@ func (c *ExistsCommand) Execute(args []resp.Payload, ctx *CommandContext) resp.P
 		return resp.NewError("ERR internal server error")
 	}
 
-	var result int
+	count := 0
 
 	for _, arg := range args {
-		_, ok := ctx.k.Get(arg.Bulk)
-		if ok {
-			result++
+		if ctx.k.CheckExistsKey(arg.Bulk) {
+			count++
 		}
 	}
-	return resp.NewInteger(result)
+	return resp.NewInteger(count)
 }
