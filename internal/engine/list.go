@@ -1,6 +1,9 @@
 package engine
 
-import "strconv"
+import (
+	"strconv"
+	"sync"
+)
 
 type Node struct {
 	val  string
@@ -12,6 +15,7 @@ type List struct {
 	head *Node
 	tail *Node
 	len  int
+	mu   sync.RWMutex
 }
 
 func NewNode(val string) *Node {
@@ -46,19 +50,6 @@ func (l *List) LinkToList(newList *List) (headList *Node) {
 	return headList
 }
 
-// func (l *List) Len() int {
-// 	res := 0
-// 	cur := l.head
-// 	for {
-// 		if cur == nil {
-// 			break
-// 		}
-// 		res++
-// 		cur = cur.next
-// 	}
-// 	return res
-// }
-
 //===================================LIST=================================
 
 func (k *KeyValue) SetList(key string, lPush bool, elements []string) (res int, err error) {
@@ -69,25 +60,31 @@ func (k *KeyValue) SetList(key string, lPush bool, elements []string) (res int, 
 			return 0, ErrInternal
 		}
 	}
-	oldValue, exist := k.kv.Get(key)
-	if !exist {
-		obj := NewObject(LIST, list)
-		k.kv.Set(key, obj)
-		res = list.len
-	} else {
-		temp := oldValue.(*Object)
-		if temp.typ == LIST {
-			oldList := temp.value.(*List)
+
+	_, err = k.kv.Compute(key, func(prev any, exists bool) (newValue any, err error) {
+		if !exists {
+			res = list.len
+			return NewObject(LIST, list), nil
+		}
+
+		obj := prev.(*Object)
+		if obj.typ == LIST {
+			oldList := obj.value.(*List)
+			oldList.mu.Lock()
+			defer oldList.mu.Unlock()
+
 			if lPush {
-				oldList.head = list.LinkToList(oldList)
+				list.tail.next = oldList.head
+				oldList.head = list.head
+				oldList.len += list.len
 			} else {
 				oldList.LinkToList(list)
 			}
-			return oldList.len, err
-		} else {
-			err = ErrWrongType
+			res = oldList.len
+			return obj, nil
 		}
-	}
+		return nil, ErrWrongType
+	})
 	return res, err
 }
 
@@ -117,7 +114,8 @@ func (k *KeyValue) GetListBetween(key, start, stop string) (values []string, fou
 			return values, found, ErrWrongType
 		}
 		oldList := obj.value.(*List)
-
+		oldList.mu.RLock()
+		defer oldList.mu.RUnlock()
 		if intStart < 0 {
 			intStart += oldList.len
 		}
