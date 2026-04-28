@@ -7,4 +7,5 @@ require (
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/tidwall/rhh v1.3.0 // indirect
 	github.com/tidwall/shardmap v0.0.0-20190927132224-c190691bd211 // indirect
+	github.com/xgzlucario/quicklist v0.0.0-20240530174658-6f1a884f579b // indirect
 )

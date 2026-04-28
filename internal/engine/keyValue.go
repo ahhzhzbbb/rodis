@@ -12,6 +12,7 @@ import (
 var ErrNotInteger = errors.New("value is not an integer or out of range")
 var ErrWrongType = errors.New("WRONGTYPE Operation against a key holding the wrong kind of value")
 var ErrInternal = errors.New("something go wrong with server")
+var ErrNotExists = errors.New("This key had nil value")
 
 // var ErrOverflow = errors.New("")
 // var ErrInvalidTTL = errors.New("")

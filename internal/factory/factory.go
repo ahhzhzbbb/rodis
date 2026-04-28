@@ -20,4 +20,6 @@ var CommandRegistry = map[string]func() command.Command{
 	"RPUSH":   func() command.Command { return &command.RpushCommand{} },
 	"LPUSH":   func() command.Command { return &command.LpushCommand{} },
 	"LRANGE":  func() command.Command { return &command.LrangeCommand{} },
+	"RPOP":    func() command.Command { return &command.RpopCommand{} },
+	"LPOP":    func() command.Command { return &command.LpopCommand{} },
 }
