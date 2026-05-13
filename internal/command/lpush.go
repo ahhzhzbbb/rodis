@@ -13,18 +13,19 @@ func (c *LpushCommand) Execute(args []resp.Payload, ctx *CommandContext) resp.Pa
 		return resp.NewError("ERR internal server error")
 	}
 
-	key := args[0].Bulk
+	// key := args[0].Bulk
 
-	elements := make([]string, len(args)-1)
+	// elements := make([]string, len(args)-1)
 
-	for i := len(args) - 1; i > 0; i-- {
-		elements[len(args)-i-1] = args[i].Bulk
-	}
+	// for i := len(args) - 1; i > 0; i-- {
+	// 	elements[len(args)-i-1] = args[i].Bulk
+	// }
 
-	res, err := ctx.k.SetList(key, true, elements)
-	if err != nil {
-		return resp.NewError(err.Error())
-	}
+	// res, err := ctx.k.SetList(key, true, elements)
+	// if err != nil {
+	// 	return resp.NewError(err.Error())
+	// }
 
-	return resp.NewInteger(res)
+	// return resp.NewInteger(res)
+	return resp.NewNullBulk()
 }

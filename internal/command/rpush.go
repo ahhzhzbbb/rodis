@@ -15,11 +15,13 @@ func (c *RpushCommand) Execute(args []resp.Payload, ctx *CommandContext) resp.Pa
 
 	key := args[0].Bulk
 
-	elements := make([]string, len(args)-1)
+	// elements := make([]string, len(args)-1)
 
-	for i := 1; i < len(args); i++ {
-		elements[i-1] = args[i].Bulk
-	}
+	// for i := 1; i < len(args); i++ {
+	// 	elements[i-1] = args[i].Bulk
+	// }
+
+	elements := args[1].Bulk
 
 	res, err := ctx.k.SetList(key, false, elements)
 	if err != nil {

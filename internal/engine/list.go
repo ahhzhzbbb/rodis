@@ -1,71 +1,71 @@
 package engine
 
 import (
+	"encoding/binary"
+	"fmt"
 	"strconv"
-	"sync"
 )
 
-type Node struct {
-	val  string
-	prev *Node
-	next *Node
-}
+// type Node struct {
+// 	val  string
+// 	prev *Node
+// 	next *Node
+// }
 
-type List struct {
-	head *Node
-	tail *Node
-	len  int
-	mu   sync.RWMutex
-}
+// type List struct {
+// 	head *Node
+// 	tail *Node
+// 	len  int
+// 	mu   sync.RWMutex
+// }
 
-func NewNode(val string) *Node {
-	return &Node{
-		val: val,
-	}
-}
+// func NewNode(val string) *Node {
+// 	return &Node{
+// 		val: val,
+// 	}
+// }
 
-func NewList(args []string) *List {
-	var res List
+// func NewList(args []string) *List {
+// 	var res List
 
-	head := NewNode(args[0])
+// 	head := NewNode(args[0])
 
-	res.head = head
-	res.tail = head
-	res.len = len(args)
+// 	res.head = head
+// 	res.tail = head
+// 	res.len = len(args)
 
-	for i := 1; i < len(args); i++ {
-		newNode := NewNode(args[i])
-		res.tail.next = newNode
-		res.tail = newNode
-	}
+// 	for i := 1; i < len(args); i++ {
+// 		newNode := NewNode(args[i])
+// 		res.tail.next = newNode
+// 		res.tail = newNode
+// 	}
 
-	return &res
-}
+// 	return &res
+// }
 
-func (l *List) LinkToList(newList *List) (headList *Node) {
-	l.tail.next = newList.head
-	l.tail = newList.tail
-	headList = l.head
-	l.len += newList.len
-	return headList
-}
+// func (l *List) LinkToList(newList *List) (headList *Node) {
+// 	l.tail.next = newList.head
+// 	l.tail = newList.tail
+// 	headList = l.head
+// 	l.len += newList.len
+// 	return headList
+// }
 
-func (l *List) GetElements() (elements []string) {
-	curr := l.head
-	for {
-		if curr == nil {
-			break
-		}
-		elements = append(elements, curr.val)
-		curr = curr.next
-	}
-	return elements
-}
+// func (l *List) GetElements() (elements []string) {
+// 	curr := l.head
+// 	for {
+// 		if curr == nil {
+// 			break
+// 		}
+// 		elements = append(elements, curr.val)
+// 		curr = curr.next
+// 	}
+// 	return elements
+// }
 
 //===================================LIST=================================
 
-func (k *KeyValue) SetList(key string, lPush bool, elements []string) (res int, err error) {
-	list := NewList(elements)
+func (k *KeyValue) SetList(key string, lPush bool, element string) (res int, err error) {
 	if k.CheckExpireKey(key) {
 		ok := k.Del(key)
 		if !ok {
@@ -75,24 +75,25 @@ func (k *KeyValue) SetList(key string, lPush bool, elements []string) (res int, 
 
 	_, err = k.kv.Compute(key, func(prev any, exists bool) (newValue any, err error) {
 		if !exists {
-			res = list.len
+			list := NewZipList()
+			res = 1
+			list.PushBack(element)
 			return NewObject(LIST, list), nil
 		}
 
 		obj := prev.(*Object)
 		if obj.typ == LIST {
-			oldList := obj.value.(*List)
+			oldList := obj.value.(*ZipList)
 			oldList.mu.Lock()
 			defer oldList.mu.Unlock()
 
 			if lPush {
-				list.tail.next = oldList.head
-				oldList.head = list.head
-				oldList.len += list.len
+				//do something
 			} else {
-				oldList.LinkToList(list)
+				fmt.Println("thuc hien pushback...")
+				oldList.PushBack(element)
 			}
-			res = oldList.len
+			res = int(oldList.Length())
 			return obj, nil
 		}
 		return nil, ErrWrongType
@@ -125,123 +126,140 @@ func (k *KeyValue) GetListBetween(key, start, stop string) (values []string, fou
 		if obj.typ != LIST {
 			return values, found, ErrWrongType
 		}
-		oldList := obj.value.(*List)
+		oldList := obj.value.(*ZipList)
 		oldList.mu.RLock()
 		defer oldList.mu.RUnlock()
 		if intStart < 0 {
-			intStart += oldList.len
+			intStart += int(oldList.Length())
 		}
 
 		if intStop < 0 {
-			intStop += oldList.len
+			intStop += int(oldList.Length())
 		}
 
-		if intStart >= oldList.len {
+		if intStart >= int(oldList.Length()) {
 			return values, false, err
 		}
 
-		cur := oldList.head
-		count := 0
-		for {
-			if cur == nil {
-				break
-			}
+		// cur := oldList.head
+		// count := 0
+		// for {
+		// 	if cur == nil {
+		// 		break
+		// 	}
 
+		// 	if count > int(intStop) {
+		// 		return values, true, err
+		// 	}
+
+		// 	if count >= int(intStart) {
+		// 		values = append(values, cur.val)
+		// 	}
+		// 	cur = cur.next
+		// 	count++
+		// }
+
+		count := 0
+		offset := 10
+		listLen := binary.LittleEndian.Uint32(oldList.buf[0:4])
+		for offset < int(listLen) {
 			if count > int(intStop) {
 				return values, true, err
 			}
 
 			if count >= int(intStart) {
-				values = append(values, cur.val)
+				encoding := uint8(oldList.buf[offset+1])
+				s := string(oldList.buf[offset+2 : offset+2+int(encoding)])
+				values = append(values, s)
 			}
-			cur = cur.next
 			count++
 		}
+
 		found = true
 	}
 
 	return values, found, err
 }
 
-func (k *KeyValue) PopList(key, count string, lpop bool) (values []string, poped bool, err error) {
-	if k.CheckExpireKey(key) {
-		ok := k.Del(key)
-		if !ok {
-			return nil, false, ErrInternal
-		}
-	}
+// func (k *KeyValue) PopList(key, count string, lpop bool) (values []string, poped bool, err error) {
+// 	if k.CheckExpireKey(key) {
+// 		ok := k.Del(key)
+// 		if !ok {
+// 			return nil, false, ErrInternal
+// 		}
+// 	}
 
-	temp, err := strconv.ParseInt(count, 10, 64)
-	if err != nil {
-		return values, false, ErrNotInteger
-	}
-	countInt := int(temp)
+// 	temp, err := strconv.ParseInt(count, 10, 64)
+// 	if err != nil {
+// 		return values, false, ErrNotInteger
+// 	}
+// 	countInt := int(temp)
 
-	_, err = k.kv.Compute(key, func(prev any, exists bool) (newValue any, err error) {
-		if !exists {
-			return prev, ErrNotExists
-		}
+// 	_, err = k.kv.Compute(key, func(prev any, exists bool) (newValue any, err error) {
+// 		if !exists {
+// 			return prev, ErrNotExists
+// 		}
 
-		obj := prev.(*Object)
-		if obj.typ != LIST {
-			return values, ErrWrongType
-		}
-		oldList := obj.value.(*List)
-		oldList.mu.RLock()
-		defer oldList.mu.RUnlock()
+// 		obj := prev.(*Object)
+// 		if obj.typ != LIST {
+// 			return values, ErrWrongType
+// 		}
+// 		oldList := obj.value.(*List)
+// 		oldList.mu.RLock()
+// 		defer oldList.mu.RUnlock()
 
-		values = make([]string, 0, min(countInt, oldList.len))
+// 		values = make([]string, 0, min(countInt, oldList.len))
 
-		if countInt >= oldList.len {
-			if lpop {
-				values = append(values, oldList.GetElements()...)
-			} else {
-				elements := oldList.GetElements()
-				for i := len(elements) - 1; i >= 0; i-- {
-					values = append(values, elements[i])
-				}
-			}
-			return nil, nil
-		} else {
-			if lpop {
-				cnt := 0
-				for cnt < countInt {
-					// fmt.Printf("cnt: %d  countInt: %d\n", cnt, countInt)
-					values = append(values, oldList.head.val)
-					temp := oldList.head.next
-					oldList.head.next = nil
-					oldList.head = temp
-					cnt++
-				}
-			} else {
-				cnt := 1
-				curr := oldList.head
-				for cnt < (oldList.len - countInt) {
-					curr = curr.next
-					cnt++
-				}
-				oldList.tail = curr
-				for {
-					curr = curr.next
-					if curr == nil {
-						break
-					}
+// 		if countInt >= oldList.len {
+// 			if lpop {
+// 				values = append(values, oldList.GetElements()...)
+// 			} else {
+// 				elements := oldList.GetElements()
+// 				for i := len(elements) - 1; i >= 0; i-- {
+// 					values = append(values, elements[i])
+// 				}
+// 			}
+// 			return nil, nil
+// 		} else {
+// 			if lpop {
+// 				cnt := 0
+// 				for cnt < countInt {
+// 					// fmt.Printf("cnt: %d  countInt: %d\n", cnt, countInt)
+// 					values = append(values, oldList.head.val)
+// 					temp := oldList.head.next
+// 					oldList.head.next = nil
+// 					oldList.head = temp
+// 					cnt++
+// 				}
+// 			} else {
+// 				cnt := 1
+// 				curr := oldList.head
+// 				for cnt < (oldList.len - countInt) {
+// 					curr = curr.next
+// 					cnt++
+// 				}
+// 				oldList.tail = curr
+// 				for {
+// 					curr = curr.next
+// 					if curr == nil {
+// 						break
+// 					}
 
-					values = append(values, curr.val)
-				}
-				oldList.tail.next = nil
-			}
-			oldList.len -= countInt
-		}
+// 					values = append(values, curr.val)
+// 				}
+// 				oldList.tail.next = nil
+// 			}
+// 			oldList.len -= countInt
+// 		}
 
-		return obj, err
-	})
-	if err != nil {
-		if err == ErrNotExists {
-			return values, false, nil
-		}
-		return values, false, err
-	}
+// 		return obj, err
+// 	})
+// 	if err != nil {
+// 		if err == ErrNotExists {
+// 			return values, false, nil
+// 		}
+// 		return values, false, err
+// 	}
 
-	return values, true, err
-}
+// 	return values, true, err
+// }
