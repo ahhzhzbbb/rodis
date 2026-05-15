@@ -89,8 +89,8 @@ func (k *KeyValue) SetList(key string, lPush bool, element string) (res int, err
 
 			if lPush {
 				//do something
+
 			} else {
-				fmt.Println("thuc hien pushback...")
 				oldList.PushBack(element)
 			}
 			res = int(oldList.Length())
@@ -181,85 +181,105 @@ func (k *KeyValue) GetListBetween(key, start, stop string) (values []string, fou
 	return values, found, err
 }
 
-// func (k *KeyValue) PopList(key, count string, lpop bool) (values []string, poped bool, err error) {
-// 	if k.CheckExpireKey(key) {
-// 		ok := k.Del(key)
-// 		if !ok {
-// 			return nil, false, ErrInternal
-// 		}
-// 	}
+func (k *KeyValue) PopList(key, count string, lpop bool) (values []string, poped bool, err error) {
+	if k.CheckExpireKey(key) {
+		ok := k.Del(key)
+		if !ok {
+			return nil, false, ErrInternal
+		}
+	}
 
-// 	temp, err := strconv.ParseInt(count, 10, 64)
-// 	if err != nil {
-// 		return values, false, ErrNotInteger
-// 	}
-// 	countInt := int(temp)
+	temp, err := strconv.ParseInt(count, 10, 64)
+	if err != nil {
+		return values, false, ErrNotInteger
+	}
+	countInt := int(temp)
 
-// 	_, err = k.kv.Compute(key, func(prev any, exists bool) (newValue any, err error) {
-// 		if !exists {
-// 			return prev, ErrNotExists
-// 		}
+	_, err = k.kv.Compute(key, func(prev any, exists bool) (newValue any, err error) {
+		if !exists {
+			return prev, ErrNotExists
+		}
 
-// 		obj := prev.(*Object)
-// 		if obj.typ != LIST {
-// 			return values, ErrWrongType
-// 		}
-// 		oldList := obj.value.(*List)
-// 		oldList.mu.RLock()
-// 		defer oldList.mu.RUnlock()
+		obj := prev.(*Object)
+		if obj.typ != LIST {
+			return values, ErrWrongType
+		}
+		oldList := obj.value.(*ZipList)
+		oldList.mu.RLock()
+		defer oldList.mu.RUnlock()
 
-// 		values = make([]string, 0, min(countInt, oldList.len))
+		values = make([]string, 0, min(countInt, int(oldList.Length())))
 
-// 		if countInt >= oldList.len {
-// 			if lpop {
-// 				values = append(values, oldList.GetElements()...)
-// 			} else {
-// 				elements := oldList.GetElements()
-// 				for i := len(elements) - 1; i >= 0; i-- {
-// 					values = append(values, elements[i])
-// 				}
-// 			}
-// 			return nil, nil
-// 		} else {
-// 			if lpop {
-// 				cnt := 0
-// 				for cnt < countInt {
-// 					// fmt.Printf("cnt: %d  countInt: %d\n", cnt, countInt)
-// 					values = append(values, oldList.head.val)
-// 					temp := oldList.head.next
-// 					oldList.head.next = nil
-// 					oldList.head = temp
-// 					cnt++
-// 				}
-// 			} else {
-// 				cnt := 1
-// 				curr := oldList.head
-// 				for cnt < (oldList.len - countInt) {
-// 					curr = curr.next
-// 					cnt++
-// 				}
-// 				oldList.tail = curr
-// 				for {
-// 					curr = curr.next
-// 					if curr == nil {
-// 						break
-// 					}
+		fmt.Println(oldList.Length())
+		if countInt >= int(oldList.Length()) {
+			if lpop {
+				values = append(values, oldList.GetElements()...)
+			} else {
+				println("hello")
+				elements := oldList.GetElements()
+				println("goodbye")
+				for i := len(elements) - 1; i >= 0; i-- {
+					values = append(values, elements[i])
+				}
+			}
+			return nil, nil
+		} else {
+			fmt.Println(2)
+			if lpop {
+				// cnt := 0
+				// for cnt < countInt {
+				// 	// fmt.Printf("cnt: %d  countInt: %d\n", cnt, countInt)
+				// 	values = append(values, oldList.head.val)
+				// 	temp := oldList.head.next
+				// 	oldList.head.next = nil
+				// 	oldList.head = temp
+				// 	cnt++
+				// }
+			} else {
+				// cnt := 1
+				// curr := oldList.head
+				// for cnt < (oldList.len - countInt) {
+				// 	curr = curr.next
+				// 	cnt++
+				// }
+				// oldList.tail = curr
+				// for {
+				// 	curr = curr.next
+				// 	if curr == nil {
+				// 		break
+				// 	}
 
-// 					values = append(values, curr.val)
-// 				}
-// 				oldList.tail.next = nil
-// 			}
-// 			oldList.len -= countInt
-// 		}
+				// 	values = append(values, curr.val)
+				// }
+				// oldList.tail.next = nil
+				offset := binary.LittleEndian.Uint32(oldList.buf[4:8])
+				for cnt := 0; cnt < countInt; cnt++ {
+					encoding := uint8(oldList.buf[offset+1])
+					values = append(values, string(oldList.buf[offset+2:offset+2+uint32(encoding)]))
+					prevLen := oldList.buf[offset]
+					oldList.buf[offset] = 0xFF
+					offset = offset - uint32(prevLen)
+				}
+				oldList.updateHeader()
+				binary.LittleEndian.PutUint32(
+					oldList.buf[4:8],
+					offset,
+				)
+				binary.LittleEndian.PutUint16(
+					oldList.buf[8:10],
+					oldList.Length()-uint16(countInt),
+				)
+			}
+		}
 
-// 		return obj, err
-// 	})
-// 	if err != nil {
-// 		if err == ErrNotExists {
-// 			return values, false, nil
-// 		}
-// 		return values, false, err
-// 	}
+		return obj, err
+	})
+	if err != nil {
+		if err == ErrNotExists {
+			return values, false, nil
+		}
+		return values, false, err
+	}
 
-// 	return values, true, err
-// }
+	return values, true, err
+}

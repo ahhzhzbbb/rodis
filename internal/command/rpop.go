@@ -13,23 +13,22 @@ func (c *RpopCommand) Execute(args []resp.Payload, ctx *CommandContext) resp.Pay
 		return resp.NewError("ERR internal server error")
 	}
 
-	// key := args[0].Bulk
-	// count := "1"
-	// if len(args) == 2 {
-	// 	count = args[1].Bulk
-	// }
-	// elements, poped, err := ctx.k.PopList(key, count, false)
-	// if err != nil {
-	// 	return resp.NewError(err.Error())
-	// }
-	// if !poped {
-	// 	return resp.NewNullBulk()
-	// }
+	key := args[0].Bulk
+	count := "1"
+	if len(args) == 2 {
+		count = args[1].Bulk
+	}
+	elements, poped, err := ctx.k.PopList(key, count, false)
+	if err != nil {
+		return resp.NewError(err.Error())
+	}
+	if !poped {
+		return resp.NewNullBulk()
+	}
 
-	// var res []resp.Payload
-	// for _, e := range elements {
-	// 	res = append(res, resp.NewBulk(e))
-	// }
-	// return resp.NewArray(res)
-	return resp.NewNullBulk()
+	var res []resp.Payload
+	for _, e := range elements {
+		res = append(res, resp.NewBulk(e))
+	}
+	return resp.NewArray(res)
 }

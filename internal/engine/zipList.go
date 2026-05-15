@@ -2,7 +2,6 @@ package engine
 
 import (
 	"encoding/binary"
-	"fmt"
 	"sync"
 )
 
@@ -46,23 +45,23 @@ func (zl *ZipList) GetTail() uint32 {
 }
 
 func (zl *ZipList) updateHeader() {
-	oldLen := binary.LittleEndian.Uint32(zl.buf[0:4])
+	// oldLen := binary.LittleEndian.Uint32(zl.buf[0:4])
 	binary.LittleEndian.PutUint32(
 		zl.buf[0:4],
 		uint32(len(zl.buf)),
 	)
 
-	binary.LittleEndian.PutUint32(
-		zl.buf[4:8],
-		uint32(oldLen-1),
-	)
+	// binary.LittleEndian.PutUint32(
+	// 	zl.buf[4:8],
+	// 	uint32(oldLen-1),
+	// )
 
-	count := zl.Length()
+	// count := zl.Length()
 
-	binary.LittleEndian.PutUint16(
-		zl.buf[8:10],
-		uint16(count+1),
-	)
+	// binary.LittleEndian.PutUint16(
+	// 	zl.buf[8:10],
+	// 	uint16(count+1),
+	// )
 }
 
 func (zl *ZipList) PushBack(element string) {
@@ -83,18 +82,43 @@ func (zl *ZipList) PushBack(element string) {
 
 	entry = append(entry, content...)
 
-	fmt.Println(entry)
-
 	zl.buf = zl.buf[:len(zl.buf)-1]
 
 	zl.buf = append(zl.buf, entry...)
 	zl.buf = append(zl.buf, 0xFF)
 
+	oldLen := binary.LittleEndian.Uint32(zl.buf[0:4])
 	zl.updateHeader()
-	fmt.Printf("length: %d\n", len(zl.buf))
+	binary.LittleEndian.PutUint32(
+		zl.buf[4:8],
+		uint32(oldLen-1),
+	)
+	count := zl.Length()
+
+	binary.LittleEndian.PutUint16(
+		zl.buf[8:10],
+		uint16(count+1),
+	)
 }
 
-func (zl *ZipList) GetElements() {
+// func (zl *ZipList) PushFront() {
+
+// }
+
+func (zl *ZipList) GetElements() (res []string) {
+	var offset uint32
+	offset = 10
+	for {
+		if zl.buf[offset] == 0xFF {
+			break
+		}
+		encoding := uint8(zl.buf[offset+1])
+		res = append(res, string(zl.buf[offset+2:offset+2+uint32(encoding)]))
+	}
+	return res
+}
+
+func (zl *ZipList) ReverseTravel() {
 
 }
 
