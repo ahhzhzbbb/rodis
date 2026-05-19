@@ -6,14 +6,14 @@ type LpushCommand struct{}
 
 func (c *LpushCommand) Execute(args []resp.Payload, ctx *CommandContext) resp.Payload {
 	if len(args) < 2 {
-		return resp.NewError("ERR wrong number of arguments for 'rpush' command")
+		return resp.NewError("ERR wrong number of arguments for 'lpush' command")
 	}
 
 	if ctx == nil || ctx.k == nil {
 		return resp.NewError("ERR internal server error")
 	}
 
-	// key := args[0].Bulk
+	key := args[0].Bulk
 
 	// elements := make([]string, len(args)-1)
 
@@ -21,11 +21,12 @@ func (c *LpushCommand) Execute(args []resp.Payload, ctx *CommandContext) resp.Pa
 	// 	elements[len(args)-i-1] = args[i].Bulk
 	// }
 
-	// res, err := ctx.k.SetList(key, true, elements)
-	// if err != nil {
-	// 	return resp.NewError(err.Error())
-	// }
+	elements := args[1].Bulk
 
-	// return resp.NewInteger(res)
-	return resp.NewNullBulk()
+	res, err := ctx.k.SetList(key, true, elements)
+	if err != nil {
+		return resp.NewError(err.Error())
+	}
+
+	return resp.NewInteger(res)
 }

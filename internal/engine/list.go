@@ -88,7 +88,7 @@ func (k *KeyValue) SetList(key string, lPush bool, element string) (res int, err
 			defer oldList.mu.Unlock()
 
 			if lPush {
-				//do something
+				oldList.PushFront(element)
 
 			} else {
 				oldList.PushBack(element)
@@ -141,26 +141,8 @@ func (k *KeyValue) GetListBetween(key, start, stop string) (values []string, fou
 			return values, false, err
 		}
 
-		// cur := oldList.head
-		// count := 0
-		// for {
-		// 	if cur == nil {
-		// 		break
-		// 	}
-
-		// 	if count > int(intStop) {
-		// 		return values, true, err
-		// 	}
-
-		// 	if count >= int(intStart) {
-		// 		values = append(values, cur.val)
-		// 	}
-		// 	cur = cur.next
-		// 	count++
-		// }
-
 		count := 0
-		offset := 10
+		offset := HEADER_SIZE
 		listLen := binary.LittleEndian.Uint32(oldList.buf[0:4])
 		for offset < int(listLen) {
 			if count > int(intStop) {
@@ -171,6 +153,7 @@ func (k *KeyValue) GetListBetween(key, start, stop string) (values []string, fou
 				encoding := uint8(oldList.buf[offset+1])
 				s := string(oldList.buf[offset+2 : offset+2+int(encoding)])
 				values = append(values, s)
+				offset += 2 + int(encoding)
 			}
 			count++
 		}
@@ -215,60 +198,21 @@ func (k *KeyValue) PopList(key, count string, lpop bool) (values []string, poped
 			if lpop {
 				values = append(values, oldList.GetElements()...)
 			} else {
-				println("hello")
 				elements := oldList.GetElements()
-				println("goodbye")
 				for i := len(elements) - 1; i >= 0; i-- {
 					values = append(values, elements[i])
 				}
 			}
 			return nil, nil
 		} else {
-			fmt.Println(2)
-			if lpop {
-				// cnt := 0
-				// for cnt < countInt {
-				// 	// fmt.Printf("cnt: %d  countInt: %d\n", cnt, countInt)
-				// 	values = append(values, oldList.head.val)
-				// 	temp := oldList.head.next
-				// 	oldList.head.next = nil
-				// 	oldList.head = temp
-				// 	cnt++
-				// }
-			} else {
-				// cnt := 1
-				// curr := oldList.head
-				// for cnt < (oldList.len - countInt) {
-				// 	curr = curr.next
-				// 	cnt++
-				// }
-				// oldList.tail = curr
-				// for {
-				// 	curr = curr.next
-				// 	if curr == nil {
-				// 		break
-				// 	}
-
-				// 	values = append(values, curr.val)
-				// }
-				// oldList.tail.next = nil
-				offset := binary.LittleEndian.Uint32(oldList.buf[4:8])
-				for cnt := 0; cnt < countInt; cnt++ {
-					encoding := uint8(oldList.buf[offset+1])
-					values = append(values, string(oldList.buf[offset+2:offset+2+uint32(encoding)]))
-					prevLen := oldList.buf[offset]
-					oldList.buf[offset] = 0xFF
-					offset = offset - uint32(prevLen)
+			for range countInt {
+				var value string
+				if lpop {
+					value = oldList.PopFront()
+				} else {
+					value = oldList.PopBack()
 				}
-				oldList.updateHeader()
-				binary.LittleEndian.PutUint32(
-					oldList.buf[4:8],
-					offset,
-				)
-				binary.LittleEndian.PutUint16(
-					oldList.buf[8:10],
-					oldList.Length()-uint16(countInt),
-				)
+				values = append(values, value)
 			}
 		}
 
