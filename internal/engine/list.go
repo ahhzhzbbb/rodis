@@ -1,71 +1,12 @@
 package engine
 
 import (
-	"encoding/binary"
-	"fmt"
 	"strconv"
 )
 
-// type Node struct {
-// 	val  string
-// 	prev *Node
-// 	next *Node
-// }
-
-// type List struct {
-// 	head *Node
-// 	tail *Node
-// 	len  int
-// 	mu   sync.RWMutex
-// }
-
-// func NewNode(val string) *Node {
-// 	return &Node{
-// 		val: val,
-// 	}
-// }
-
-// func NewList(args []string) *List {
-// 	var res List
-
-// 	head := NewNode(args[0])
-
-// 	res.head = head
-// 	res.tail = head
-// 	res.len = len(args)
-
-// 	for i := 1; i < len(args); i++ {
-// 		newNode := NewNode(args[i])
-// 		res.tail.next = newNode
-// 		res.tail = newNode
-// 	}
-
-// 	return &res
-// }
-
-// func (l *List) LinkToList(newList *List) (headList *Node) {
-// 	l.tail.next = newList.head
-// 	l.tail = newList.tail
-// 	headList = l.head
-// 	l.len += newList.len
-// 	return headList
-// }
-
-// func (l *List) GetElements() (elements []string) {
-// 	curr := l.head
-// 	for {
-// 		if curr == nil {
-// 			break
-// 		}
-// 		elements = append(elements, curr.val)
-// 		curr = curr.next
-// 	}
-// 	return elements
-// }
-
 //===================================LIST=================================
 
-func (k *KeyValue) SetList(key string, lPush bool, element string) (res int, err error) {
+func (k *KeyValue) SetList(key string, lPush bool, elements []string) (res int, err error) {
 	if k.CheckExpireKey(key) {
 		ok := k.Del(key)
 		if !ok {
@@ -75,23 +16,21 @@ func (k *KeyValue) SetList(key string, lPush bool, element string) (res int, err
 
 	_, err = k.kv.Compute(key, func(prev any, exists bool) (newValue any, err error) {
 		if !exists {
-			list := NewZipList()
-			res = 1
-			list.PushBack(element)
+			list := NewQuickList(0, elements)
+			res = len(elements)
 			return NewObject(LIST, list), nil
 		}
 
 		obj := prev.(*Object)
 		if obj.typ == LIST {
-			oldList := obj.value.(*ZipList)
+			oldList := obj.value.(*QuickList)
 			oldList.mu.Lock()
 			defer oldList.mu.Unlock()
 
 			if lPush {
-				oldList.PushFront(element)
-
+				oldList.PushFront(elements)
 			} else {
-				oldList.PushBack(element)
+				oldList.PushBack(elements)
 			}
 			res = int(oldList.Length())
 			return obj, nil
@@ -126,7 +65,7 @@ func (k *KeyValue) GetListBetween(key, start, stop string) (values []string, fou
 		if obj.typ != LIST {
 			return values, found, ErrWrongType
 		}
-		oldList := obj.value.(*ZipList)
+		oldList := obj.value.(*QuickList)
 		oldList.mu.RLock()
 		defer oldList.mu.RUnlock()
 		if intStart < 0 {
@@ -141,22 +80,15 @@ func (k *KeyValue) GetListBetween(key, start, stop string) (values []string, fou
 			return values, false, err
 		}
 
-		count := 0
-		offset := HEADER_SIZE
-		listLen := binary.LittleEndian.Uint32(oldList.buf[0:4])
-		for offset < int(listLen) {
-			if count > int(intStop) {
-				return values, true, err
-			}
-
-			if count >= int(intStart) {
-				encoding := uint8(oldList.buf[offset+1])
-				s := string(oldList.buf[offset+2 : offset+2+int(encoding)])
-				values = append(values, s)
-				offset += 2 + int(encoding)
-			}
-			count++
+		if intStop >= int(oldList.Length()) {
+			intStop = int(oldList.Length()) - 1
 		}
+
+		if intStart > intStop {
+			return values, true, err
+		}
+
+		values = oldList.GetElements()[intStart : intStop+1]
 
 		found = true
 	}
@@ -187,13 +119,12 @@ func (k *KeyValue) PopList(key, count string, lpop bool) (values []string, poped
 		if obj.typ != LIST {
 			return values, ErrWrongType
 		}
-		oldList := obj.value.(*ZipList)
+		oldList := obj.value.(*QuickList)
 		oldList.mu.RLock()
 		defer oldList.mu.RUnlock()
 
 		values = make([]string, 0, min(countInt, int(oldList.Length())))
 
-		fmt.Println(oldList.Length())
 		if countInt >= int(oldList.Length()) {
 			if lpop {
 				values = append(values, oldList.GetElements()...)
@@ -205,14 +136,18 @@ func (k *KeyValue) PopList(key, count string, lpop bool) (values []string, poped
 			}
 			return nil, nil
 		} else {
-			for range countInt {
-				var value string
-				if lpop {
-					value = oldList.PopFront()
-				} else {
-					value = oldList.PopBack()
+			if lpop {
+				var temp []string
+				for range countInt {
+					temp = append(values, oldList.PopFront())
 				}
-				values = append(values, value)
+				for i := len(temp) - 1; i >= 0; i-- {
+					values = append(values, temp[i])
+				}
+			} else {
+				for range countInt {
+					values = append(values, oldList.PopBack())
+				}
 			}
 		}
 

@@ -15,13 +15,11 @@ func (c *LpushCommand) Execute(args []resp.Payload, ctx *CommandContext) resp.Pa
 
 	key := args[0].Bulk
 
-	// elements := make([]string, len(args)-1)
+	elements := make([]string, len(args)-1)
 
-	// for i := len(args) - 1; i > 0; i-- {
-	// 	elements[len(args)-i-1] = args[i].Bulk
-	// }
-
-	elements := args[1].Bulk
+	for i := len(args) - 1; i > 0; i-- {
+		elements[len(args)-i-1] = args[i].Bulk
+	}
 
 	res, err := ctx.k.SetList(key, true, elements)
 	if err != nil {
