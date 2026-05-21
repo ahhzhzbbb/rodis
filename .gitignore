@@ -5,5 +5,5 @@ cmd/redis-server/dump.rdb
 logs/
 dump.rdb
 rodis-server
-benchmark/*.test
-benchmark/*.out
+internal/benchmark/*.test
+internal/benchmark/*.out

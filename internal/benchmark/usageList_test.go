@@ -13,7 +13,7 @@ func BenchmarkQuickList(b *testing.B) {
 	}
 
 	for b.Loop() {
-		engine.NewQuickList(10000000000, args)
+		engine.NewQuickList(100000, args)
 	}
 }
 
