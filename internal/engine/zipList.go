@@ -66,40 +66,27 @@ func (zl *ZipList) UpdateHeader(newTail uint32, newLen uint16) {
 }
 
 func (zl *ZipList) PushBack(element string) {
-	content := []byte(element)
-	encoding := byte(len(content))
-	var prevLen uint8 = 0
+	content := element
+	encoding := len(content)
+
+	var prevLen byte = 0
 
 	if zl.Length() > 0 {
 		prevLen = uint8(zl.buf[zl.GetTail()+1]) + 2
 	}
 
-	entry := []byte{
-		prevLen,
-		encoding,
-	}
-
-	entry = append(entry, content...)
-
 	zl.buf = zl.buf[:len(zl.buf)-1]
 
-	zl.buf = append(zl.buf, entry...)
+	zl.buf = append(zl.buf, prevLen)
+	zl.buf = append(zl.buf, byte(encoding))
+	zl.buf = append(zl.buf, content...)
 	zl.buf = append(zl.buf, 0xFF)
 
 	oldLen := binary.LittleEndian.Uint32(zl.buf[0:4])
-	binary.LittleEndian.PutUint32(
-		zl.buf[0:4],
-		uint32(len(zl.buf)),
-	)
-	binary.LittleEndian.PutUint32(
-		zl.buf[4:8],
-		uint32(oldLen-1),
-	)
-	count := zl.Length()
-	binary.LittleEndian.PutUint16(
-		zl.buf[8:10],
-		uint16(count+1),
-	)
+	newTail := oldLen - 1
+	newLen := zl.Length() + 1
+
+	zl.UpdateHeader(newTail, newLen)
 }
 
 func (zl *ZipList) PopBack() string {
