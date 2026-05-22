@@ -145,6 +145,45 @@ func (ql *QuickList) PopFront() string {
 	return value
 }
 
+func (ql *QuickList) GetIndexOFElement(element string) (*QLNode, int, bool) {
+	curr := ql.head
+	for curr != nil {
+		if pos, found := curr.zip.GetIndexOfElement(element); found {
+			return curr, pos, true
+		} else {
+			curr = curr.next
+		}
+	}
+	return nil, -1, false
+}
+
+func (ql *QuickList) Insert(node *QLNode, indexInNode int, value string) bool {
+	if indexInNode < 0 || node == nil {
+		return false
+	}
+
+	if node == ql.head && indexInNode == -1 {
+		ql.PushFront([]string{value})
+		return true
+	}
+
+	if node == ql.tail && indexInNode == int(node.zip.Length()) {
+		ql.PushBack([]string{value})
+		return true
+	}
+
+	elementSize := 2 + uint32(len(value))
+	if node.zip.GetBytes()+elementSize > uint32(ql.bytesOfNode) {
+		newNode := &QLNode{
+			zip: node.zip.SplitList(indexInNode),
+		}
+		if newNode == nil {
+			return false
+		}
+		node.zip.PushBack(value)
+	}
+}
+
 func (ql *QuickList) Length() int {
 	return ql.len
 }

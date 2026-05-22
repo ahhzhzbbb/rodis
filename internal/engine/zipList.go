@@ -179,3 +179,87 @@ func (zl *ZipList) GetElements() (res []string) {
 	}
 	return res
 }
+
+func (zl *ZipList) GetIndexOfElement(element string) (int, bool) {
+	var offset uint32
+	offset = 10
+	index := 0
+	for {
+		if zl.buf[offset] == 0xFF {
+			break
+		}
+		encoding := uint8(zl.buf[offset+1])
+		if string(zl.buf[offset+2:offset+2+uint32(encoding)]) == element {
+			return index, true
+		}
+		offset = offset + 2 + uint32(encoding)
+		index++
+	}
+	return -1, false
+}
+
+func (zl *ZipList) SplitList(index int) *ZipList {
+	if zl.Length() <= 1 {
+		return nil
+	}
+	if index < 1 || index >= int(zl.Length())-1 {
+		return nil
+	}
+	var offset uint32
+	offset = HEADER_SIZE
+	for i := 0; i < index; i++ {
+		encoding := uint8(zl.buf[offset+1])
+		offset = offset + 2 + uint32(encoding)
+	}
+
+	entries := zl.buf[offset : zl.GetBytes()-1]
+	newZl := &ZipList{
+		buf: make([]byte, HEADER_SIZE+len(entries)+1),
+	}
+	copy(newZl.buf[HEADER_SIZE:], entries)
+	newZl.buf[len(newZl.buf)-1] = 0xFF
+	newZl.UpdateHeader(uint32(len(newZl.buf)), uint16(len(entries)/2))
+	zl.buf = zl.buf[:offset]
+	zl.buf = append(zl.buf, 0xFF)
+	zl.UpdateHeader(offset, uint16(index))
+	return newZl
+}
+
+func (zl *ZipList) Insert(index int, element string) bool {
+	if index < 0 || index > int(zl.Length()) {
+		return false
+	}
+	if index == 0 {
+		zl.PushFront(element)
+		return true
+	}
+	if index == int(zl.Length()) {
+		zl.PushBack(element)
+		return true
+	}
+	var offset uint32
+	offset = HEADER_SIZE
+	for i := 0; i < index; i++ {
+		encoding := uint8(zl.buf[offset+1])
+		offset = offset + 2 + uint32(encoding)
+	}
+
+	content := []byte(element)
+	var prevLen uint8 = 0
+	encoding := uint8(len(content))
+
+	entry := []byte{
+		prevLen,
+		encoding,
+	}
+
+	entry = append(entry, content...)
+
+	zl.buf = zl.buf[:offset]
+	zl.buf = append(zl.buf, entry...)
+	oldEntries := make([]byte, zl.GetBytes()-offset)
+	copy(oldEntries, zl.buf[offset:])
+	zl.buf = append(zl.buf, oldEntries...)
+	zl.UpdateHeader(uint32(len(zl.buf)), zl.Length()+1)
+	return true
+}

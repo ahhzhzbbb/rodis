@@ -162,3 +162,37 @@ func (k *KeyValue) PopList(key, count string, lpop bool) (values []string, poped
 
 	return values, true, err
 }
+
+func (k *KeyValue) ListInsert(key string, position int, pivot, value string) (count int, err error) {
+	if k.CheckExpireKey(key) {
+		ok := k.Del(key)
+		if !ok {
+			return 0, ErrInternal
+		}
+	}
+
+	_, err = k.kv.Compute(key, func(prev any, exists bool) (newValue any, err error) {
+		if !exists {
+			return prev, ErrNotExists
+		}
+
+		obj := prev.(*Object)
+		if obj.typ != LIST {
+			return nil, ErrWrongType
+		}
+		oldList := obj.value.(*QuickList)
+		oldList.mu.Lock()
+		defer oldList.mu.Unlock()
+
+		count = oldList.Insert(position, pivot, value)
+		return obj, nil
+	})
+	if err != nil {
+		if err == ErrNotExists {
+			return 0, nil
+		}
+		return 0, err
+	}
+
+	return count, nil
+}
