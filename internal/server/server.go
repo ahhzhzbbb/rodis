@@ -24,6 +24,8 @@ func NewServer(cfg Config) *Server {
 }
 
 func (s *Server) Start() bool {
+	s.Banner()
+
 	ln, err := net.Listen("tcp", s.Port)
 	if err != nil {
 		return false

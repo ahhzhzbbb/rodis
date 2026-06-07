@@ -1,15 +1,16 @@
 package engine
 
-import "sync"
+import (
+	"fmt"
+)
 
-const DefaultCapNode = 10000
+const DefaultCapNode = 20
 
 type QuickList struct {
 	head        *QLNode
 	tail        *QLNode
 	len         int
 	bytesOfNode int
-	mu          sync.RWMutex
 }
 
 type QLNode struct {
@@ -42,12 +43,21 @@ func NewQuickList(bytesOfNode int, args []string) *QuickList {
 
 	res.head = qlNode
 
+	count := 0
 	index := 0
 	for index < len(args) {
-		if !qlNode.isFull(bytesOfNode) {
+		if uint32(qlNode.zip.GetHeaderSize())+2+uint32(len(args[index])) > uint32(bytesOfNode) {
+			fmt.Printf("Element size is too large with bytes: %d, skipping element: %s\n", uint32(qlNode.zip.GetHeaderSize())+2+uint32(len(args[index])), args[index])
+			index++
+			continue
+		}
+
+		if qlNode.zip.GetBytes()+2+uint32(len(args[index])) <= uint32(bytesOfNode) {
 			qlNode.zip.PushBack(args[index])
+			count++
 			index++
 		} else {
+			fmt.Printf("Current node is full with bytes: %d, creating a new node\n", qlNode.zip.GetBytes())
 			newNode := &QLNode{
 				zip: NewZipList(),
 			}
@@ -57,10 +67,13 @@ func NewQuickList(bytesOfNode int, args []string) *QuickList {
 		}
 	}
 
-	res.tail = qlNode
-	res.len = len(args)
-	res.bytesOfNode = bytesOfNode
+	if qlNode.zip.Length() == 0 {
+		return nil
+	}
 
+	res.tail = qlNode
+	res.len = count
+	res.bytesOfNode = bytesOfNode
 	return &res
 }
 
@@ -78,9 +91,13 @@ func (ql *QuickList) GetElements() (elements []string) {
 		if curr == nil {
 			break
 		}
+		// fmt.Printf("Getting elements from node with bytes: %d\n", curr.zip.GetBytes())
 		elements = append(elements, curr.zip.GetElements()...)
 		curr = curr.next
 	}
+	// for e := range elements {
+	// 	fmt.Printf("Element %d: %s\n", e, elements[e])
+	// }
 	return elements
 }
 
@@ -158,11 +175,12 @@ func (ql *QuickList) GetIndexOFElement(element string) (*QLNode, int, bool) {
 }
 
 func (ql *QuickList) Insert(node *QLNode, indexInNode int, value string) bool {
+	fmt.Printf("indexInNode: %d\n", indexInNode)
 	if indexInNode < 0 || node == nil {
 		return false
 	}
 
-	if node == ql.head && indexInNode == -1 {
+	if node == ql.head && indexInNode == 0 {
 		ql.PushFront([]string{value})
 		return true
 	}
@@ -173,15 +191,71 @@ func (ql *QuickList) Insert(node *QLNode, indexInNode int, value string) bool {
 	}
 
 	elementSize := 2 + uint32(len(value))
+	if elementSize > uint32(ql.bytesOfNode) {
+		return false
+	}
 	if node.zip.GetBytes()+elementSize > uint32(ql.bytesOfNode) {
 		newNode := &QLNode{
 			zip: node.zip.SplitList(indexInNode),
 		}
-		if newNode == nil {
-			return false
+		if newNode.zip == nil {
+			newNode.zip = NewZipList()
+			if indexInNode == 0 {
+				newNode.zip.PushFront(value)
+				temp := node.prev
+				node.prev = newNode
+				newNode.next = node
+				if temp != nil {
+					temp.next = newNode
+					newNode.prev = temp
+				} else {
+					ql.head = newNode
+				}
+			} else {
+				newNode.zip.PushBack(value)
+				temp := node.next
+				node.next = newNode
+				newNode.prev = node
+				newNode.next = temp
+				if temp != nil {
+					temp.prev = newNode
+				} else {
+					ql.tail = newNode
+				}
+			}
+			ql.len++
+			return true
 		}
-		node.zip.PushBack(value)
+		minNode := node
+		if newNode.zip.GetBytes() < node.zip.GetBytes() {
+			minNode = newNode
+		}
+		if minNode.zip.GetBytes()+elementSize > uint32(ql.bytesOfNode) {
+			insertNode := &QLNode{
+				zip: NewZipList(),
+			}
+			insertNode.zip.PushBack(value)
+			node.next = insertNode
+			insertNode.prev = node
+			insertNode.next = newNode
+			newNode.prev = insertNode
+		} else {
+			if minNode == node {
+				node.zip.PushBack(value)
+			} else {
+				newNode.zip.PushFront(value)
+			}
+			temp := node.next
+			node.next = newNode
+			newNode.prev = node
+			newNode.next = temp
+			temp.prev = newNode
+		}
+	} else {
+		node.zip.Insert(indexInNode, value)
 	}
+	ql.len++
+	return true
 }
 
 func (ql *QuickList) Length() int {
