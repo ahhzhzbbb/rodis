@@ -6,7 +6,7 @@ type LpushCommand struct{}
 
 func (c *LpushCommand) Execute(args []resp.Payload, ctx *CommandContext) resp.Payload {
 	if len(args) < 2 {
-		return resp.NewError("ERR wrong number of arguments for 'rpush' command")
+		return resp.NewError("ERR wrong number of arguments for 'lpush' command")
 	}
 
 	if ctx == nil || ctx.k == nil {
