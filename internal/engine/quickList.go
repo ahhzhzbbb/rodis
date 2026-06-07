@@ -57,7 +57,7 @@ func NewQuickList(bytesOfNode int, args []string) *QuickList {
 			count++
 			index++
 		} else {
-			fmt.Printf("Current node is full with bytes: %d, creating a new node\n", qlNode.zip.GetBytes())
+			// fmt.Printf("Current node is full with bytes: %d, creating a new node\n", qlNode.zip.GetBytes())
 			newNode := &QLNode{
 				zip: NewZipList(),
 			}
@@ -175,7 +175,7 @@ func (ql *QuickList) GetIndexOFElement(element string) (*QLNode, int, bool) {
 }
 
 func (ql *QuickList) Insert(node *QLNode, indexInNode int, value string) bool {
-	fmt.Printf("indexInNode: %d\n", indexInNode)
+	// fmt.Printf("indexInNode: %d\n", indexInNode)
 	if indexInNode < 0 || node == nil {
 		return false
 	}
