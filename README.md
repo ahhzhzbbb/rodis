@@ -6,12 +6,12 @@
 ├── cmd
 │   ├── rodis-cli
 │   └── rodis-server
-│       ├── dump.rdb
 │       └── main.go
-├── dump.rdb
 ├── go.mod
 ├── go.sum
 ├── internal
+│   ├── benchmark
+│   │   └── usageList_test.go
 │   ├── command
 │   │   ├── append.go
 │   │   ├── commandDocs.go
@@ -22,6 +22,7 @@
 │   │   ├── expire.go
 │   │   ├── get.go
 │   │   ├── incr.go
+│   │   ├── linsert.go
 │   │   ├── lpop.go
 │   │   ├── lpush.go
 │   │   ├── lrange.go
@@ -30,6 +31,7 @@
 │   │   ├── rpush.go
 │   │   └── set.go
 │   ├── engine
+│   │   ├── doubleLinkList.go
 │   │   ├── keyValue.go
 │   │   ├── list.go
 │   │   ├── object.go
@@ -46,7 +48,8 @@
 │   └── server
 │       ├── config.go
 │       ├── handler.go
-│       └── server.go
+│       ├── server.go
+│       └── svBanner.go
 ├── logs
 │   ├── bench.log
 │   ├── error.log
@@ -57,5 +60,5 @@
 │   └── strace.sh
 └── temp
 
-13 directories, 41 files
+14 directories, 43 files
 ```
