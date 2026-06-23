@@ -22,4 +22,5 @@ var CommandRegistry = map[string]func() command.Command{
 	"LRANGE":  func() command.Command { return &command.LrangeCommand{} },
 	"RPOP":    func() command.Command { return &command.RpopCommand{} },
 	"LPOP":    func() command.Command { return &command.LpopCommand{} },
+	"LINSERT": func() command.Command { return &command.LInsertCommand{} },
 }

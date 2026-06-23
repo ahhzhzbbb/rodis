@@ -2,14 +2,12 @@ package engine
 
 import (
 	"encoding/binary"
-	"sync"
 )
 
 const HEADER_SIZE = 10
 
 type ZipList struct {
 	buf []byte
-	mu  sync.RWMutex
 	//layout: [zlbytes][zltail][zllen][entries][END]
 }
 
@@ -48,6 +46,10 @@ func (zl *ZipList) GetTail() uint32 {
 
 func (zl *ZipList) GetBytes() uint32 {
 	return binary.LittleEndian.Uint32(zl.buf[0:4])
+}
+
+func (zl *ZipList) GetHeaderSize() int {
+	return HEADER_SIZE
 }
 
 func (zl *ZipList) UpdateHeader(newTail uint32, newLen uint16) {
@@ -170,6 +172,7 @@ func (zl *ZipList) GetElements() (res []string) {
 	var offset uint32
 	offset = 10
 	for {
+		// fmt.Printf("Offset: %d\n", offset)
 		if zl.buf[offset] == 0xFF {
 			break
 		}
@@ -202,13 +205,15 @@ func (zl *ZipList) SplitList(index int) *ZipList {
 	if zl.Length() <= 1 {
 		return nil
 	}
-	if index < 1 || index >= int(zl.Length())-1 {
+	if index < 1 || index > int(zl.Length())-1 {
 		return nil
 	}
 	var offset uint32
+	var newTail uint32
 	offset = HEADER_SIZE
-	for i := 0; i < index; i++ {
+	for range index {
 		encoding := uint8(zl.buf[offset+1])
+		newTail = offset
 		offset = offset + 2 + uint32(encoding)
 	}
 
@@ -221,7 +226,7 @@ func (zl *ZipList) SplitList(index int) *ZipList {
 	newZl.UpdateHeader(uint32(len(newZl.buf)), uint16(len(entries)/2))
 	zl.buf = zl.buf[:offset]
 	zl.buf = append(zl.buf, 0xFF)
-	zl.UpdateHeader(offset, uint16(index))
+	zl.UpdateHeader(newTail, uint16(index))
 	return newZl
 }
 
@@ -239,9 +244,9 @@ func (zl *ZipList) Insert(index int, element string) bool {
 	}
 	var offset uint32
 	offset = HEADER_SIZE
-	for i := 0; i < index; i++ {
-		encoding := uint8(zl.buf[offset+1])
-		offset = offset + 2 + uint32(encoding)
+	for range index {
+		encodingEntry := uint8(zl.buf[offset+1])
+		offset = offset + 2 + uint32(encodingEntry)
 	}
 
 	content := []byte(element)
@@ -255,11 +260,14 @@ func (zl *ZipList) Insert(index int, element string) bool {
 
 	entry = append(entry, content...)
 
-	zl.buf = zl.buf[:offset]
-	zl.buf = append(zl.buf, entry...)
 	oldEntries := make([]byte, zl.GetBytes()-offset)
 	copy(oldEntries, zl.buf[offset:])
+
+	zl.buf = zl.buf[:offset]
+	zl.buf = append(zl.buf, entry...)
+
 	zl.buf = append(zl.buf, oldEntries...)
-	zl.UpdateHeader(uint32(len(zl.buf)), zl.Length()+1)
+	newTail := zl.GetTail() + uint32(2+encoding)
+	zl.UpdateHeader(newTail, zl.Length()+1)
 	return true
 }

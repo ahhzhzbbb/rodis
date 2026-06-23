@@ -17,15 +17,18 @@ func (k *KeyValue) SetList(key string, lPush bool, elements []string) (res int, 
 	_, err = k.kv.Compute(key, func(prev any, exists bool) (newValue any, err error) {
 		if !exists {
 			list := NewQuickList(0, elements)
-			res = len(elements)
-			return NewObject(LIST, list), nil
+			if list != nil {
+				res = list.Length()
+				return NewObject(LIST, list), nil
+			} else {
+				res = 0
+				return nil, nil
+			}
 		}
 
 		obj := prev.(*Object)
 		if obj.typ == LIST {
 			oldList := obj.value.(*QuickList)
-			oldList.mu.Lock()
-			defer oldList.mu.Unlock()
 
 			if lPush {
 				oldList.PushFront(elements)
@@ -66,9 +69,7 @@ func (k *KeyValue) GetListBetween(key, start, stop string) (values []string, fou
 			return values, found, ErrWrongType
 		}
 		oldList := obj.value.(*QuickList)
-		oldList.mu.RLock()
-		defer oldList.mu.RUnlock()
-		if intStart < 0 {
+		for intStart < 0 {
 			intStart += int(oldList.Length())
 		}
 
@@ -109,6 +110,9 @@ func (k *KeyValue) PopList(key, count string, lpop bool) (values []string, poped
 		return values, false, ErrNotInteger
 	}
 	countInt := int(temp)
+	if countInt < 0 {
+		return values, false, ErrNotInteger
+	}
 
 	_, err = k.kv.Compute(key, func(prev any, exists bool) (newValue any, err error) {
 		if !exists {
@@ -120,8 +124,6 @@ func (k *KeyValue) PopList(key, count string, lpop bool) (values []string, poped
 			return values, ErrWrongType
 		}
 		oldList := obj.value.(*QuickList)
-		oldList.mu.RLock()
-		defer oldList.mu.RUnlock()
 
 		values = make([]string, 0, min(countInt, int(oldList.Length())))
 
@@ -139,7 +141,7 @@ func (k *KeyValue) PopList(key, count string, lpop bool) (values []string, poped
 			if lpop {
 				var temp []string
 				for range countInt {
-					temp = append(values, oldList.PopFront())
+					temp = append(temp, oldList.PopFront())
 				}
 				for i := len(temp) - 1; i >= 0; i-- {
 					values = append(values, temp[i])
@@ -163,7 +165,7 @@ func (k *KeyValue) PopList(key, count string, lpop bool) (values []string, poped
 	return values, true, err
 }
 
-func (k *KeyValue) ListInsert(key string, position int, pivot, value string) (count int, err error) {
+func (k *KeyValue) ListInsert(key string, position string, pivot, value string) (count int, err error) {
 	if k.CheckExpireKey(key) {
 		ok := k.Del(key)
 		if !ok {
@@ -181,10 +183,26 @@ func (k *KeyValue) ListInsert(key string, position int, pivot, value string) (co
 			return nil, ErrWrongType
 		}
 		oldList := obj.value.(*QuickList)
-		oldList.mu.Lock()
-		defer oldList.mu.Unlock()
 
-		count = oldList.Insert(position, pivot, value)
+		node, index, found := oldList.GetIndexOFElement(pivot)
+		if !found {
+			return nil, ErrPivotNotFound
+		}
+
+		switch position {
+		case "BEFORE":
+			// do nothing
+			// because we want to insert before pivot, so index of new element is the same as pivot
+		case "AFTER":
+			index = index + 1
+		default:
+			return nil, ErrInternal
+		}
+
+		if !oldList.Insert(node, index, value) {
+			return nil, ErrInternal
+		}
+		count = int(oldList.Length())
 		return obj, nil
 	})
 	if err != nil {

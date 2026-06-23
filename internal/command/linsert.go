@@ -17,18 +17,9 @@ func (c *LInsertCommand) Execute(args []resp.Payload, ctx *CommandContext) resp.
 	pivot := args[2].Bulk
 	element := args[3].Bulk
 
-	switch position {
-	case "BEFORE":
-		pos = engine.ListInsertBefore
-	case "AFTER":
-		pos = engine.ListInsertAfter
-	default:
-		return resp.NewError("ERR syntax error")
-	}
-
-	count, err := ctx.k.ListInsert(key, pos, pivot, value)
+	count, err := ctx.k.ListInsert(key, position, pivot, element)
 	if err != nil {
-		return resp.NewError(err.Error())
+		return resp.NewError("ERR internal server error")
 	}
 
 	return resp.NewInteger(count)
