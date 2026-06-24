@@ -1,6 +1,6 @@
 <div align="center">
 
-  ![Rodis Logo]([https://via.placeholder.com/150](https://images.viblo.asia/2a451245-3e33-415a-9ae2-93339784df41.png))
+  ![Rodis Logo]([https://images.viblo.asia/2a451245-3e33-415a-9ae2-93339784df41.png])
 
   # 🚀 Rodis
 
