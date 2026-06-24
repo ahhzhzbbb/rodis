@@ -26,9 +26,7 @@ func (s *Server) handleConnection(conn net.Conn) {
 
 	aofResp := resp.NewResp(aof.File)
 	go func() {
-		fmt.Println("Hello guys")
 		request, err := aofResp.ParseRESP()
-		fmt.Println("Hello guyyyyyyyyyyy")
 		if err != nil {
 			return
 		}
