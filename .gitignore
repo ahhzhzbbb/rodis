@@ -7,3 +7,4 @@ dump.rdb
 rodis-server
 internal/benchmark/*.test
 internal/benchmark/*.out
+cmd/appendonly.aof

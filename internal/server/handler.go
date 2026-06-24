@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"rodis/internal/command"
+	"rodis/internal/engine"
 	"rodis/internal/factory"
 	"rodis/internal/protocol/resp"
 	"strings"
@@ -13,7 +14,26 @@ import (
 func (s *Server) handleConnection(conn net.Conn) {
 	defer conn.Close()
 
+	aof, err := engine.NewAof("../appendonly.aof")
+	if err != nil {
+		fmt.Println("failed to create aof")
+		return
+	}
+	// info, err := os.Stat("../appendonly.aof")
+	// fmt.Println(info, err)
+
 	rp := resp.NewResp(conn)
+
+	aofResp := resp.NewResp(aof.File)
+	go func() {
+		fmt.Println("Hello guys")
+		request, err := aofResp.ParseRESP()
+		fmt.Println("Hello guyyyyyyyyyyy")
+		if err != nil {
+			return
+		}
+		s.handleRequest(request)
+	}()
 
 	for {
 		count := 0
@@ -33,6 +53,19 @@ func (s *Server) handleConnection(conn net.Conn) {
 
 			if len(request.Array) == 0 {
 				continue
+			}
+
+			typeOfCommand := strings.ToUpper(request.Array[0].Bulk)
+			if typeOfCommand == "SET" ||
+				typeOfCommand == "DEL" ||
+				typeOfCommand == "INCR" ||
+				typeOfCommand == "APPEND" ||
+				typeOfCommand == "RPUSH" ||
+				typeOfCommand == "LPUSH" ||
+				typeOfCommand == "RPOP" ||
+				typeOfCommand == "LPOP" ||
+				typeOfCommand == "LINSERT" {
+				aof.Write(request, *aofResp)
 			}
 
 			response := s.handleRequest(request)
